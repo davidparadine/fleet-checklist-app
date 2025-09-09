@@ -1,0 +1,30 @@
+{
+    "insurance-notification": {
+        "subject": "Vehicle Addition Notification: {{registration}}",
+        "body": "Dear Insurance Team,\n\nCan you please add the following vehicle to our policy from today's date:\n\nRegistration: {{registration}}\nMake & Model: {{makeModel}}\n\nI have also added this to the MID portal.\n\nThank you."
+    },
+    "driver-welcome": {
+        "subject": "Welcome & Information for Your New Vehicle: {{registration}}",
+        "body": "Hi {{driverName}},\n\nWelcome to the fleet! This email contains important information regarding your new vehicle ({{registration}}).\n\nPlease review the attached documents and let us know if you have any questions.\n\nBest regards,\nFleet Management"
+    },
+    "ev-advice": {
+        "subject": "Switching to an EV Tariff for {{registration}}",
+        "body": "Hi {{driverName}},\n\nAs you are receiving a new electric vehicle, we recommend looking into switching to an EV-friendly electricity tariff for your home charging to save on costs.\n\nMany providers offer cheaper overnight rates.\n\nBest regards,\nFleet Management"
+    },
+    "p11d-info": {
+        "subject": "P11D & Benefit-in-Kind Information for {{registration}}",
+        "body": "Hi {{driverName}},\n\nThis email contains important information regarding the P11D / Benefit-in-Kind implications for your new company vehicle ({{registration}}).\n\nPlease read through the attached guidance.\n\nBest regards,\nFleet Management"
+    },
+    "caz-status": {
+        "subject": "Clean Air Zone (CAZ) Status for {{registration}}",
+        "body": "Hi {{driverName}},\n\nFor your information, the Clean Air Zone (CAZ) status for your new vehicle ({{registration}}) has been checked and confirmed.\n\nIf you have any questions about where this applies, please let us know.\n\nBest regards,\nFleet Management"
+    },
+    "signwriting-proof-request": {
+        "subject": "Signwriting Proof Request for {{registration}}",
+        "body": "Hi Team,\n\nPlease can you provide a signwriting proof for the following vehicle:\n\nRegistration: {{registration}}\nMake & Model: {{makeModel}}\n\nThank you."
+    },
+    "default": {
+        "subject": "Fleet Update: {{taskName}} for {{registration}}",
+        "body": "This is a notification that the following task has been completed for vehicle {{registration}}:\n\nTask: {{taskName}}\n\nThank you."
+    }
+}

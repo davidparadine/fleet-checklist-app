@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fleet Vehicle Onboarding Checklist</title>
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <h1>🚛 Fleet Vehicle Onboarding Checklist</h1>
+    <p><em>Complete all phases for DVSA compliance and safe handover. Progress auto-saves to Google Drive via GitHub.</em></p>
+
+    <!-- Header Section -->
+    <div class="header-section">
+        <h2>📋 Vehicle & Driver Details</h2>
+        <label for="registration">Vehicle Registration</label>
+        <input type="text" id="registration" class="header-input" placeholder="e.g., AB12 CDE" maxlength="10">
+
+        <label for="make-model">Make & Model</label>
+        <input type="text" id="make-model" class="header-input" placeholder="e.g., Ford Transit">
+        
+        <label for="driver-name">Driver Full Name</label>
+        <input type="text" id="driver-name" class="header-input" placeholder="Driver Full Name">
+        
+        <label for="driver-email">Driver Email Address</label>
+        <input type="email" id="driver-email" class="header-input" placeholder="Driver Email Address">
+
+        <label for="location">Location</label>
+        <select id="location" class="header-input">
+            <option value="Office">Office</option>
+            <option value="Site-based">Site-based</option>
+        </select>
+
+        <label for="tax-status">Tax Status</label>
+        <select id="tax-status" class="header-input">
+            <option value="None Personal Use">None Personal Use</option>
+            <option value="Personal Use">Personal Use</option>
+        </select>
+    </div>
+
+    <!-- Progress Bar -->
+    <div class="progress-bar">
+        <div id="progress-fill" class="progress-fill" style="width: 0%;"></div>
+    </div>
+    <p id="progress-text" style="text-align: center; font-weight: bold;">0/0 tasks completed (0%)</p>
+    
+    <!-- Phase Progress Summary -->
+    <div id="phase-progresses" style="background: white; padding: 15px; border-radius: 8px; margin: 15px 0;"></div>
+
+    <!-- Form Container -->
+    <form id="checklist-form"></form>
+
+    <!-- Action Buttons -->
+    <div style="text-align: center; margin: 30px 0;">
+        <button id="save-btn">💾 Save Progress to GitHub</button>
+        <br>
+        <button id="pdf-btn">📄 Generate PDF Report</button>
+        <br>
+        <label for="load-file" class="load-file">📁 Load Progress from File (JSON)</label>
+        <input type="file" id="load-file" accept=".json" style="display: none;">
+        <br>
+        <button id="reset-btn">🔄 Reset Checklist</button>
+    </div>
+
+    <!-- Status Messages -->
+    <div id="save-status"></div>
+
+    <script src="https://unpkg.com/jspdf@latest/dist/jspdf.umd.min.js"></script>
+    <script src="https://unpkg.com/jspdf-autotable@latest/dist/jspdf.plugin.autotable.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
