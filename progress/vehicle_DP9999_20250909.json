@@ -1,0 +1,567 @@
+{
+  "header": {
+    "registration": "DP9999",
+    "makeModel": "Peugeot Partner Van",
+    "driverName": "David Paradine",
+    "driverEmail": "d.paradinejr@gmail.com",
+    "location": "Office",
+    "taxStatus": "None Personal Use"
+  },
+  "tasks": [
+    {
+      "taskId": "P101",
+      "phase": "Phase 1: Initial Setup & Ordering",
+      "task": "Add to Fleetcheck Immediately",
+      "status": "Actioned",
+      "dateActioned": "2025-09-09",
+      "requiresEmail": false
+    },
+    {
+      "taskId": "P102",
+      "phase": "Phase 1: Initial Setup & Ordering",
+      "task": "Add Registration to MID Portal",
+      "status": "Actioned",
+      "dateActioned": "2025-09-09",
+      "requiresEmail": false
+    },
+    {
+      "taskId": "P103",
+      "phase": "Phase 1: Initial Setup & Ordering",
+      "task": "Email Insurance Provider with new vehicle details",
+      "status": "Actioned",
+      "dateActioned": "2025-09-09",
+      "requiresEmail": true,
+      "emailTemplate": "insurance-notification",
+      "emailRecipients": [
+        "insurance@yourfleet.com"
+      ]
+    },
+    {
+      "taskId": "P104",
+      "phase": "Phase 1: Initial Setup & Ordering",
+      "task": "Add Registration to M6 Toll ANPR account",
+      "status": "Pending",
+      "dateActioned": "",
+      "requiresEmail": false
+    },
+    {
+      "taskId": "P105",
+      "phase": "Phase 1: Initial Setup & Ordering",
+      "task": "Add vehicle to Clean Air Zone (CAZ) portal & confirm status",
+      "status": "Pending",
+      "dateActioned": "",
+      "requiresEmail": false
+    },
+    {
+      "taskId": "P106",
+      "phase": "Phase 1: Initial Setup & Ordering",
+      "task": "Order Fuel Card",
+      "status": "Pending",
+      "dateActioned": "",
+      "requiresEmail": false
+    },
+    {
+      "taskId": "P107",
+      "phase": "Phase 1: Initial Setup & Ordering",
+      "task": "Order RAC Cover",
+      "status": "Pending",
+      "dateActioned": "",
+      "requiresEmail": false
+    },
+    {
+      "taskId": "P108",
+      "phase": "Phase 1: Initial Setup & Ordering",
+      "task": "Order Seat Covers",
+      "status": "Pending",
+      "dateActioned": "",
+      "requiresEmail": false
+    },
+    {
+      "taskId": "P109",
+      "phase": "Phase 1: Initial Setup & Ordering",
+      "task": "Order Home Charger",
+      "status": "Skipped",
+      "dateActioned": "2025-09-09",
+      "requiresEmail": false
+    },
+    {
+      "taskId": "P110",
+      "phase": "Phase 1: Initial Setup & Ordering",
+      "task": "Send Details to Stripmaster",
+      "status": "Pending",
+      "dateActioned": "",
+      "requiresEmail": false
+    },
+    {
+      "taskId": "P111",
+      "phase": "Phase 1: Initial Setup & Ordering",
+      "task": "Order Mats",
+      "status": "Pending",
+      "dateActioned": "",
+      "requiresEmail": false
+    },
+    {
+      "taskId": "P112",
+      "phase": "Phase 1: Initial Setup & Ordering",
+      "task": "Order First Aid Kit",
+      "status": "Pending",
+      "dateActioned": "",
+      "requiresEmail": false
+    },
+    {
+      "taskId": "P113",
+      "phase": "Phase 1: Initial Setup & Ordering",
+      "task": "Order One Tyre Gauge",
+      "status": "Pending",
+      "dateActioned": "",
+      "requiresEmail": false
+    },
+    {
+      "taskId": "P114",
+      "phase": "Phase 1: Initial Setup & Ordering",
+      "task": "Order No Smoking Sign",
+      "status": "Pending",
+      "dateActioned": "",
+      "requiresEmail": false
+    },
+    {
+      "taskId": "P201",
+      "phase": "Phase 2: Driver Setup & Communication",
+      "task": "Send standard introductory email template to the driver",
+      "status": "Pending",
+      "dateActioned": "",
+      "requiresEmail": true,
+      "emailTemplate": "driver-welcome",
+      "emailRecipients": [
+        "{{driverEmail}}"
+      ]
+    },
+    {
+      "taskId": "P202",
+      "phase": "Phase 2: Driver Setup & Communication",
+      "task": "Request DVLA Licence scan (front & back) from driver",
+      "status": "Pending",
+      "dateActioned": "",
+      "requiresEmail": false
+    },
+    {
+      "taskId": "P203",
+      "phase": "Phase 2: Driver Setup & Communication",
+      "task": "Prepare Van Agreement",
+      "status": "Pending",
+      "dateActioned": "",
+      "requiresEmail": false
+    },
+    {
+      "taskId": "P204",
+      "phase": "Phase 2: Driver Setup & Communication",
+      "task": "Advise driver to consider switching to an EV electricity tariff",
+      "status": "Pending",
+      "dateActioned": "",
+      "requiresEmail": true,
+      "emailTemplate": "ev-advice",
+      "emailRecipients": [
+        "{{driverEmail}}"
+      ]
+    },
+    {
+      "taskId": "P205",
+      "phase": "Phase 2: Driver Setup & Communication",
+      "task": "Set up driver as a Fleetcheck User",
+      "status": "Pending",
+      "dateActioned": "",
+      "requiresEmail": false
+    },
+    {
+      "taskId": "P206",
+      "phase": "Phase 2: Driver Setup & Communication",
+      "task": "Set up Fleetcheck Mandate for driver checks",
+      "status": "Pending",
+      "dateActioned": "",
+      "requiresEmail": false
+    },
+    {
+      "taskId": "P207",
+      "phase": "Phase 2: Driver Setup & Communication",
+      "task": "Send P11D guidance information",
+      "status": "Pending",
+      "dateActioned": "",
+      "requiresEmail": true,
+      "emailTemplate": "p11d-info",
+      "emailRecipients": [
+        "{{driverEmail}}"
+      ]
+    },
+    {
+      "taskId": "P301",
+      "phase": "Phase 3: Dealership Coordination",
+      "task": "Confirm Status/ETA for Dash Cam Installation",
+      "status": "Pending",
+      "dateActioned": "",
+      "requiresEmail": false
+    },
+    {
+      "taskId": "P302",
+      "phase": "Phase 3: Dealership Coordination",
+      "task": "Confirm Status/ETA for Dead Locks Installation",
+      "status": "Pending",
+      "dateActioned": "",
+      "requiresEmail": false
+    },
+    {
+      "taskId": "P303",
+      "phase": "Phase 3: Dealership Coordination",
+      "task": "Confirm Status/ETA for Plywood Lining Installation",
+      "status": "Pending",
+      "dateActioned": "",
+      "requiresEmail": false
+    },
+    {
+      "taskId": "P304",
+      "phase": "Phase 3: Dealership Coordination",
+      "task": "Confirm Status/ETA for MOT",
+      "status": "Pending",
+      "dateActioned": "",
+      "requiresEmail": false
+    },
+    {
+      "taskId": "P305",
+      "phase": "Phase 3: Dealership Coordination",
+      "task": "Confirm Status/ETA for Vehicle Tax Activation",
+      "status": "Pending",
+      "dateActioned": "",
+      "requiresEmail": false
+    },
+    {
+      "taskId": "P306",
+      "phase": "Phase 3: Dealership Coordination",
+      "task": "Confirm Final Delivery Date",
+      "status": "Pending",
+      "dateActioned": "",
+      "requiresEmail": false
+    },
+    {
+      "taskId": "P307",
+      "phase": "Phase 3: Dealership Coordination",
+      "task": "Request Last Service Date and Mileage",
+      "status": "Pending",
+      "dateActioned": "",
+      "requiresEmail": false
+    },
+    {
+      "taskId": "P308",
+      "phase": "Phase 3: Dealership Coordination",
+      "task": "Request Engine Oil Specification",
+      "status": "Pending",
+      "dateActioned": "",
+      "requiresEmail": false
+    },
+    {
+      "taskId": "P309",
+      "phase": "Phase 3: Dealership Coordination",
+      "task": "Request Euro Rating",
+      "status": "Pending",
+      "dateActioned": "",
+      "requiresEmail": false
+    },
+    {
+      "taskId": "P310",
+      "phase": "Phase 3: Dealership Coordination",
+      "task": "Request Service Interval and Duration",
+      "status": "Pending",
+      "dateActioned": "",
+      "requiresEmail": false
+    },
+    {
+      "taskId": "P401",
+      "phase": "Phase 4: Vehicle Preparation & Delivery",
+      "task": "Verify Vehicle Tax is active",
+      "status": "Pending",
+      "dateActioned": "",
+      "requiresEmail": false
+    },
+    {
+      "taskId": "P402",
+      "phase": "Phase 4: Vehicle Preparation & Delivery",
+      "task": "Verify Vehicle MOT is active",
+      "status": "Pending",
+      "dateActioned": "",
+      "requiresEmail": false
+    },
+    {
+      "taskId": "P403",
+      "phase": "Phase 4: Vehicle Preparation & Delivery",
+      "task": "Place Fuel Card in van",
+      "status": "Pending",
+      "dateActioned": "",
+      "requiresEmail": false
+    },
+    {
+      "taskId": "P404",
+      "phase": "Phase 4: Vehicle Preparation & Delivery",
+      "task": "Place Mats in van",
+      "status": "Pending",
+      "dateActioned": "",
+      "requiresEmail": false
+    },
+    {
+      "taskId": "P405",
+      "phase": "Phase 4: Vehicle Preparation & Delivery",
+      "task": "Place Seat Covers in van",
+      "status": "Pending",
+      "dateActioned": "",
+      "requiresEmail": false
+    },
+    {
+      "taskId": "P406",
+      "phase": "Phase 4: Vehicle Preparation & Delivery",
+      "task": "Place First Aid Kit in van",
+      "status": "Pending",
+      "dateActioned": "",
+      "requiresEmail": false
+    },
+    {
+      "taskId": "P407",
+      "phase": "Phase 4: Vehicle Preparation & Delivery",
+      "task": "Place No Smoking sign in van",
+      "status": "Pending",
+      "dateActioned": "",
+      "requiresEmail": false
+    },
+    {
+      "taskId": "P408",
+      "phase": "Phase 4: Vehicle Preparation & Delivery",
+      "task": "Attach Tyre Gauge to Keys",
+      "status": "Pending",
+      "dateActioned": "",
+      "requiresEmail": false
+    },
+    {
+      "taskId": "P409",
+      "phase": "Phase 4: Vehicle Preparation & Delivery",
+      "task": "Prepare Spare Key with Identifying Tag",
+      "status": "Pending",
+      "dateActioned": "",
+      "requiresEmail": false
+    },
+    {
+      "taskId": "P410",
+      "phase": "Phase 4: Vehicle Preparation & Delivery",
+      "task": "Take vehicle photos (front, tyres, tyre pressures)",
+      "status": "Pending",
+      "dateActioned": "",
+      "requiresEmail": false
+    },
+    {
+      "taskId": "P501",
+      "phase": "Phase 5: End-User Handover",
+      "task": "Confirm driver has Fleetcheck app installed",
+      "status": "Pending",
+      "dateActioned": "",
+      "requiresEmail": false
+    },
+    {
+      "taskId": "P502",
+      "phase": "Phase 5: End-User Handover",
+      "task": "Confirm to driver CAZ status",
+      "status": "Pending",
+      "dateActioned": "",
+      "requiresEmail": true,
+      "emailTemplate": "caz-status",
+      "emailRecipients": [
+        "{{driverEmail}}"
+      ]
+    },
+    {
+      "taskId": "P503",
+      "phase": "Phase 5: End-User Handover",
+      "task": "Instruct driver to complete Initial Issue Sheet",
+      "status": "Pending",
+      "dateActioned": "",
+      "requiresEmail": false
+    },
+    {
+      "taskId": "P504",
+      "phase": "Phase 5: End-User Handover",
+      "task": "Notify Midas of new vehicle",
+      "status": "Pending",
+      "dateActioned": "",
+      "requiresEmail": false
+    },
+    {
+      "taskId": "P505",
+      "phase": "Phase 5: End-User Handover",
+      "task": "Upload Van User Agreement to Fleetcheck",
+      "status": "Pending",
+      "dateActioned": "",
+      "requiresEmail": false
+    },
+    {
+      "taskId": "P506",
+      "phase": "Phase 5: End-User Handover",
+      "task": "Upload vehicle photos to Fleetcheck",
+      "status": "Pending",
+      "dateActioned": "",
+      "requiresEmail": false
+    },
+    {
+      "taskId": "P507",
+      "phase": "Phase 5: End-User Handover",
+      "task": "Upload invoice to Fleetcheck",
+      "status": "Pending",
+      "dateActioned": "",
+      "requiresEmail": false
+    },
+    {
+      "taskId": "P601",
+      "phase": "Phase 6: Post-Delivery Administration",
+      "task": "Enter Vehicle Type in Fleetcheck",
+      "status": "Pending",
+      "dateActioned": "",
+      "requiresEmail": false
+    },
+    {
+      "taskId": "P602",
+      "phase": "Phase 6: Post-Delivery Administration",
+      "task": "Enter Body Type in Fleetcheck",
+      "status": "Pending",
+      "dateActioned": "",
+      "requiresEmail": false
+    },
+    {
+      "taskId": "P603",
+      "phase": "Phase 6: Post-Delivery Administration",
+      "task": "Enter Transmission Type in Fleetcheck",
+      "status": "Pending",
+      "dateActioned": "",
+      "requiresEmail": false
+    },
+    {
+      "taskId": "P604",
+      "phase": "Phase 6: Post-Delivery Administration",
+      "task": "Enter Colour in Fleetcheck",
+      "status": "Pending",
+      "dateActioned": "",
+      "requiresEmail": false
+    },
+    {
+      "taskId": "P605",
+      "phase": "Phase 6: Post-Delivery Administration",
+      "task": "Enter Oil Type Details in Fleetcheck",
+      "status": "Pending",
+      "dateActioned": "",
+      "requiresEmail": false
+    },
+    {
+      "taskId": "P606",
+      "phase": "Phase 6: Post-Delivery Administration",
+      "task": "Enter Oil Type Spec in Fleetcheck",
+      "status": "Pending",
+      "dateActioned": "",
+      "requiresEmail": false
+    },
+    {
+      "taskId": "P607",
+      "phase": "Phase 6: Post-Delivery Administration",
+      "task": "Enter Euro Rating in Fleetcheck",
+      "status": "Pending",
+      "dateActioned": "",
+      "requiresEmail": false
+    },
+    {
+      "taskId": "P608",
+      "phase": "Phase 6: Post-Delivery Administration",
+      "task": "Enter Number of Seats in Fleetcheck",
+      "status": "Pending",
+      "dateActioned": "",
+      "requiresEmail": false
+    },
+    {
+      "taskId": "P609",
+      "phase": "Phase 6: Post-Delivery Administration",
+      "task": "Enter Spare Keys/Documents/V5 Location in Fleetcheck",
+      "status": "Pending",
+      "dateActioned": "",
+      "requiresEmail": false
+    },
+    {
+      "taskId": "P610",
+      "phase": "Phase 6: Post-Delivery Administration",
+      "task": "Enter Adblue requirement in Fleetcheck",
+      "status": "Pending",
+      "dateActioned": "",
+      "requiresEmail": false
+    },
+    {
+      "taskId": "P611",
+      "phase": "Phase 6: Post-Delivery Administration",
+      "task": "Add Service Interval and Duration details to Fleetcheck",
+      "status": "Pending",
+      "dateActioned": "",
+      "requiresEmail": false
+    },
+    {
+      "taskId": "P612",
+      "phase": "Phase 6: Post-Delivery Administration",
+      "task": "Add Last Service Date and Mileage details to Fleetcheck",
+      "status": "Pending",
+      "dateActioned": "",
+      "requiresEmail": false
+    },
+    {
+      "taskId": "P701",
+      "phase": "Phase 7: Finance",
+      "task": "Enter Ownership details in Fleetcheck",
+      "status": "Pending",
+      "dateActioned": "",
+      "requiresEmail": false
+    },
+    {
+      "taskId": "P702",
+      "phase": "Phase 7: Finance",
+      "task": "Enter Broker Details in Fleetcheck",
+      "status": "Pending",
+      "dateActioned": "",
+      "requiresEmail": false
+    },
+    {
+      "taskId": "P703",
+      "phase": "Phase 7: Finance",
+      "task": "Enter Purchase Date in Fleetcheck",
+      "status": "Pending",
+      "dateActioned": "",
+      "requiresEmail": false
+    },
+    {
+      "taskId": "P704",
+      "phase": "Phase 7: Finance",
+      "task": "Enter Purchase Amount in Fleetcheck",
+      "status": "Pending",
+      "dateActioned": "",
+      "requiresEmail": false
+    },
+    {
+      "taskId": "P705",
+      "phase": "Phase 7: Finance",
+      "task": "Enter Delivery Date in Fleetcheck",
+      "status": "Pending",
+      "dateActioned": "",
+      "requiresEmail": false
+    },
+    {
+      "taskId": "P706",
+      "phase": "Phase 7: Finance",
+      "task": "Enter Initial Mileage in Fleetcheck",
+      "status": "Pending",
+      "dateActioned": "",
+      "requiresEmail": false
+    }
+  ],
+  "stats": {
+    "totalTasks": 66,
+    "completed": 4,
+    "progressPercent": 6.0606060606060606,
+    "savedAt": "2025-09-09T19:48:42.851Z",
+    "savedBy": "David Paradine"
+  }
+}
