@@ -8,6 +8,7 @@
 // === CONFIGURATION ===
 const REPO_OWNER = 'davidparadine';
 const REPO_NAME = 'fleet-checklist-app';
+const API_BASE_URL = 'https://fleet-checklist-app.vercel.app'; // Your Vercel deployment URL
 
 // === GLOBAL DATA ===
 let header = {
@@ -28,17 +29,6 @@ let emailTemplates = {};
  * Main initialization function that runs when the page loads.
  */
 window.onload = async function() {
-    // Prompt for GitHub PAT if not in sessionStorage for better security
-    let pat = sessionStorage.getItem('github_pat');
-    if (!pat) {
-        pat = prompt('Enter your GitHub Personal Access Token (PAT) for saving progress. This will be stored for the session only.');
-        if (pat) {
-            sessionStorage.setItem('github_pat', pat);
-        } else {
-            alert('A PAT is required for saving progress to GitHub. The save button will be disabled. Please refresh to try again.');
-        }
-    }
-    
     await initChecklist();
     setupEventListeners();
 };
@@ -443,7 +433,7 @@ async function triggerEmailNotification(task) {
 
     try {
         // This makes a request to the backend server endpoint we created.
-        const response = await fetch('/api/send-email', {
+        const response = await fetch(`${API_BASE_URL}/api/send-email`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -469,12 +459,6 @@ async function triggerEmailNotification(task) {
  * Saves the current progress to a file in the GitHub repository.
  */
 async function saveToGitHub() {
-    const pat = sessionStorage.getItem('github_pat');
-    if (!pat) {
-        showStatus('Error: GitHub PAT not found. Please refresh the page and enter your token to save.', 'error');
-        return;
-    }
-
     const saveBtn = document.getElementById('save-btn');
     const statusEl = document.getElementById('save-status');
     saveBtn.disabled = true;
@@ -493,50 +477,16 @@ async function saveToGitHub() {
         }
     };
 
-    const jsonStr = JSON.stringify(progressData, null, 2);
     const timestamp = new Date().toISOString().split('T')[0].replace(/-/g, '');
     const fileName = `progress/vehicle_${header.registration || 'NEW'}_${timestamp}.json`;
 
-    let existingFileSha = null;
-
     try {
-        // Step 1: Check if the file already exists to get its SHA for updating
-        const getFileResponse = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${fileName}`, {
-            method: 'GET',
+        const response = await fetch(`${API_BASE_URL}/api/github/save`, {
+            method: 'POST',
             headers: {
-                'Authorization': `token ${pat}`,
-                'User-Agent': 'FleetChecklistApp/1.0'
-            }
-        });
-
-        if (getFileResponse.ok) {
-            const fileData = await getFileResponse.json();
-            existingFileSha = fileData.sha;
-        } else if (getFileResponse.status !== 404) {
-            // Handle errors other than "Not Found"
-            const errorData = await getFileResponse.json();
-            throw new Error(`GitHub API Error (GET) ${getFileResponse.status}: ${errorData.message || getFileResponse.statusText}.`);
-        }
-
-        // Step 2: Create or update the file
-        const requestBody = {
-            message: `Fleet checklist update: ${header.registration || 'New Vehicle'}`,
-            content: btoa(unescape(encodeURIComponent(jsonStr))), // UTF-8 safe base64 encoding
-            branch: 'main'
-        };
-
-        if (existingFileSha) {
-            requestBody.sha = existingFileSha;
-        }
-
-        const response = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${fileName}`, {
-            method: 'PUT',
-            headers: {
-                'Authorization': `token ${pat}`,
                 'Content-Type': 'application/json',
-                'User-Agent': 'FleetChecklistApp/1.0'
             },
-            body: JSON.stringify(requestBody)
+            body: JSON.stringify({ fileName, content: progressData })
         });
 
         if (response.ok) {
@@ -544,7 +494,7 @@ async function saveToGitHub() {
             saveToLocalStorage();
         } else {
             const errorData = await response.json();
-            throw new Error(`GitHub API Error (PUT) ${response.status}: ${errorData.message || response.statusText}.`);
+            throw new Error(errorData.message || `Server responded with status ${response.status}`);
         }
     } catch (error) {
         console.error('Save error:', error);
@@ -559,29 +509,15 @@ async function saveToGitHub() {
  * Shows a modal with a list of saved files from the GitHub repository.
  */
 async function showGitHubLoadModal() {
-    const pat = sessionStorage.getItem('github_pat');
-    if (!pat) {
-        showStatus('Error: GitHub PAT not found. Please refresh and enter your token.', 'error');
-        return;
-    }
-
     const modal = document.getElementById('github-load-modal');
     const fileListDiv = document.getElementById('github-file-list');
     modal.style.display = 'block';
     fileListDiv.innerHTML = '<p>🔄 Loading files from GitHub...</p>';
 
     try {
-        const response = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/progress`, {
-            headers: {
-                'Authorization': `token ${pat}`,
-                'User-Agent': 'FleetChecklistApp/1.0'
-            }
-        });
+        const response = await fetch(`${API_BASE_URL}/api/github/load`);
 
         if (!response.ok) {
-            if (response.status === 404) {
-                throw new Error('The "progress" directory does not exist in the repository.');
-            }
             const errorData = await response.json();
             throw new Error(`GitHub API Error: ${errorData.message}`);
         }
@@ -606,7 +542,7 @@ async function showGitHubLoadModal() {
                 fileItem.onclick = (e) => {
                     e.preventDefault();
                     if (confirm(`Are you sure you want to load progress from ${file.name}? This will overwrite your current unsaved changes.`)) {
-                        loadFromGitHub(file.path);
+                        loadFromGitHub(file.name);
                         modal.style.display = 'none';
                     }
                 };
@@ -622,28 +558,22 @@ async function showGitHubLoadModal() {
 
 /**
  * Loads progress from a specific file path in the GitHub repository.
- * @param {string} filePath - The full path to the file in the repo (e.g., 'progress/vehicle_...json').
+ * @param {string} fileName - The name of the file in the progress directory.
  */
-async function loadFromGitHub(filePath) {
-    const pat = sessionStorage.getItem('github_pat');
+async function loadFromGitHub(fileName) {
     showStatus('🔄 Loading file from GitHub...', 'warning');
 
     try {
-        const response = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${filePath}`, {
-            headers: {
-                'Authorization': `token ${pat}`,
-                'User-Agent': 'FleetChecklistApp/1.0'
-            }
-        });
+        const response = await fetch(`${API_BASE_URL}/api/github/load/${fileName}`);
 
         if (!response.ok) throw new Error('Failed to fetch file content.');
 
         const fileData = await response.json();
-        const jsonContent = atob(fileData.content); // Decode base64 content
+        const jsonContent = atob(fileData.content); // Decode base64 content from GitHub API response
         const data = JSON.parse(jsonContent);
 
         // Use the same logic as loadFromFile to apply the data
-        applyLoadedData(data, filePath);
+        applyLoadedData(data, fileName);
 
     } catch (error) {
         showStatus(`❌ Error loading from GitHub: ${error.message}`, 'error');
