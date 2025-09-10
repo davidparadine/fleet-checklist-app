@@ -18,13 +18,16 @@
         <input type="text" id="registration" class="header-input" placeholder="e.g., AB12 CDE" maxlength="10">
 
         <label for="make-model">Make & Model</label>
-        <input type="text" id="make-model" class="header-input" placeholder="e.g., Ford Transit">
+        <input type="text" id="make-model" class="header-input" placeholder="Copy and Paste Make & Model from Fleetcheck">
         
         <label for="driver-name">Driver Full Name</label>
         <input type="text" id="driver-name" class="header-input" placeholder="Driver Full Name">
         
         <label for="driver-email">Driver Email Address</label>
         <input type="email" id="driver-email" class="header-input" placeholder="Driver Email Address">
+
+        <label for="driver-start-date">Driver Start Date of Employment</label>
+        <input type="date" id="driver-start-date" class="header-input">
 
         <label for="location">Location</label>
         <select id="location" class="header-input">
@@ -37,6 +40,9 @@
             <option value="None Personal Use">None Personal Use</option>
             <option value="Personal Use">Personal Use</option>
         </select>
+
+        <label for="seller-email">Seller's Email</label>
+        <input type="email" id="seller-email" class="header-input" placeholder="Seller's Email Address">
     </div>
 
     <!-- Progress Bar -->
@@ -54,8 +60,7 @@
     <!-- Action Buttons -->
     <div style="text-align: center; margin: 30px 0;">
         <button id="pdf-btn">📄 Generate PDF Report</button>
-        <br>
-        <label for="load-file" class="load-file">📁 Load Progress from File (JSON)</label>
+        <button id="load-file-btn">📁 Load Progress from File (JSON)</button>
         <br>
         <button id="save-file-btn">💾 Save Progress to File (JSON)</button>
         <input type="file" id="load-file" accept=".json" style="display: none;">

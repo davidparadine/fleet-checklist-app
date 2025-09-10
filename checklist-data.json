@@ -53,7 +53,7 @@
     {
         "taskId": "6",
         "phase": "Phase 1: Initial Setup & Ordering",
-        "task": "Order Fuel Card",
+        "task": "Order Fuel Card and Issue Pin",
         "status": "Pending",
         "dateActioned": "",
         "requiresEmail": false
@@ -173,95 +173,19 @@
     {
         "taskId": "22",
         "phase": "Phase 3: Dealership Coordination",
-        "task": "Confirm Status/ETA for Dash Cam Installation",
+        "task": "Email seller to confirm coordination tasks",
         "status": "Pending",
         "dateActioned": "",
-        "requiresEmail": false
-    },
-    {
-        "taskId": "23",
-        "phase": "Phase 3: Dealership Coordination",
-        "task": "Confirm Status/ETA for Dead Locks Installation",
-        "status": "Pending",
-        "dateActioned": "",
-        "requiresEmail": false
-    },
-    {
-        "taskId": "24",
-        "phase": "Phase 3: Dealership Coordination",
-        "task": "Confirm Status/ETA for Plywood Lining Installation",
-        "status": "Pending",
-        "dateActioned": "",
-        "requiresEmail": false
-    },
-    {
-        "taskId": "25",
-        "phase": "Phase 3: Dealership Coordination",
-        "task": "Confirm Status/ETA for MOT",
-        "status": "Pending",
-        "dateActioned": "",
-        "requiresEmail": false
-    },
-    {
-        "taskId": "26",
-        "phase": "Phase 3: Dealership Coordination",
-        "task": "Confirm Status/ETA for Vehicle Tax Activation",
-        "status": "Pending",
-        "dateActioned": "",
-        "requiresEmail": false
-    },
-    {
-        "taskId": "27",
-        "phase": "Phase 3: Dealership Coordination",
-        "task": "Confirm Final Delivery Date",
-        "status": "Pending",
-        "dateActioned": "",
-        "requiresEmail": false
-    },
-    {
-        "taskId": "28",
-        "phase": "Phase 3: Dealership Coordination",
-        "task": "Request Last Service Date and Mileage",
-        "status": "Pending",
-        "dateActioned": "",
-        "requiresEmail": false
-    },
-    {
-        "taskId": "29",
-        "phase": "Phase 3: Dealership Coordination",
-        "task": "Request Engine Oil Specification",
-        "status": "Pending",
-        "dateActioned": "",
-        "requiresEmail": false
-    },
-    {
-        "taskId": "30",
-        "phase": "Phase 3: Dealership Coordination",
-        "task": "Request Euro Rating",
-        "status": "Pending",
-        "dateActioned": "",
-        "requiresEmail": false
-    },
-    {
-        "taskId": "31",
-        "phase": "Phase 3: Dealership Coordination",
-        "task": "Request Service Interval and Duration",
-        "status": "Pending",
-        "dateActioned": "",
-        "requiresEmail": false
+        "requiresEmail": true,
+        "emailTemplate": "dealership-coordination-request",
+        "emailRecipients": [
+            "{{sellerEmail}}"
+        ]
     },
     {
         "taskId": "32",
         "phase": "Phase 4: Vehicle Preparation & Delivery",
-        "task": "Verify Vehicle Tax is active",
-        "status": "Pending",
-        "dateActioned": "",
-        "requiresEmail": false
-    },
-    {
-        "taskId": "33",
-        "phase": "Phase 4: Vehicle Preparation & Delivery",
-        "task": "Verify Vehicle MOT is active",
+        "task": "Verify Vehicle Tax and MOT are active (check at https://vehicleenquiry.service.gov.uk/)",
         "status": "Pending",
         "dateActioned": "",
         "requiresEmail": false

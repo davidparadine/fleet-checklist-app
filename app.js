@@ -14,8 +14,10 @@ const API_BASE_URL = '';
 let header = {
     registration: '',
     makeModel: '',
+    sellerEmail: '',
     driverName: '',
     driverEmail: '',
+    driverStartDate: '',
     location: 'Office',
     taxStatus: 'None Personal Use'
 };
@@ -113,16 +115,33 @@ function restoreFromLocalStorage() {
 function setupEventListeners() {
     document.getElementById('registration').addEventListener('change', function() { updateHeader('registration', this.value.toUpperCase()); });
     document.getElementById('make-model').addEventListener('change', function() { updateHeader('makeModel', this.value); });
+    document.getElementById('seller-email').addEventListener('change', function() { updateHeader('sellerEmail', this.value); });
     document.getElementById('driver-name').addEventListener('change', function() { updateHeader('driverName', this.value); });
     document.getElementById('driver-email').addEventListener('change', function() { updateHeader('driverEmail', this.value); });
+    document.getElementById('driver-start-date').addEventListener('change', function() { updateHeader('driverStartDate', this.value); });
     document.getElementById('location').addEventListener('change', function() { updateHeader('location', this.value); });
     document.getElementById('tax-status').addEventListener('change', function() { updateHeader('taxStatus', this.value); });
 
     // Attach listeners for action buttons
+    document.getElementById('load-file-btn').addEventListener('click', () => document.getElementById('load-file').click());
     document.getElementById('load-file').addEventListener('change', (event) => loadFromFile(event.target.files[0]));
     document.getElementById('save-file-btn').addEventListener('click', saveToFile);
     document.getElementById('pdf-btn').addEventListener('click', generatePdf);
     document.getElementById('reset-btn').addEventListener('click', resetChecklist);
+}
+
+
+/**
+ * Finds URLs in a string and converts them to clickable HTML anchor tags.
+ * @param {string} text - The text to parse for URLs.
+ * @returns {string} The text with URLs converted to HTML.
+ */
+function linkify(text) {
+    const urlRegex = /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/ig;
+    // Add onclick to stop the expander's click event from firing when a link is clicked.
+    return text.replace(urlRegex, function(url) {
+        return `<a href="${url}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">${url}</a>`;
+    });
 }
 
 
@@ -186,22 +205,20 @@ function createTaskElement(task, index) {
 
     const taskDiv = document.createElement('div');
     taskDiv.className = 'task';
-
+    
+    // Convert any URLs in the task description to clickable links
+    const linkedTaskText = linkify(task.task);
     const statusColor = getStatusColor(task.status);
 
     taskDiv.innerHTML = `
         <div class="expander">
-            ▼ ${task.taskId}: ${task.task} 
+            ▼ ${task.taskId}: ${linkedTaskText} 
             <span style="color: ${statusColor};">- Status: ${task.status}</span>
             ${task.requiresEmail ? ' 📧' : ''}
         </div>
         <div class="task-content" id="content-${index}" style="display: none;">
             <label>Status:</label>
-            <select class="status-select" id="status-select-${index}">
-                <option value="Pending">Pending</option>
-                <option value="Actioned">Actioned</option>
-                <option value="Skipped">Skipped</option>
-            </select>
+            <select class="status-select" id="status-select-${index}"></select>
             <br>
             <label>Date Actioned:</label>
             <input type="date" class="date-input" id="date-${index}" value="${task.dateActioned || ''}">
@@ -212,6 +229,15 @@ function createTaskElement(task, index) {
 
     // Set initial values and add event listeners
     const statusSelect = taskDiv.querySelector(`#status-select-${index}`);
+
+    // Populate status options
+    const statusOptions = task.availableStatuses || ['Pending', 'Actioned', 'Skipped'];
+    statusOptions.forEach(option => {
+        const optionEl = document.createElement('option');
+        optionEl.value = option;
+        optionEl.textContent = option;
+        statusSelect.appendChild(optionEl);
+    });
     statusSelect.value = task.status;
 
     const dateInput = taskDiv.querySelector(`#date-${index}`);
@@ -333,8 +359,10 @@ function updateProgress() {
 function updateHeaderFields() {
     document.getElementById('registration').value = header.registration;
     document.getElementById('make-model').value = header.makeModel;
+    document.getElementById('seller-email').value = header.sellerEmail || '';
     document.getElementById('driver-name').value = header.driverName;
     document.getElementById('driver-email').value = header.driverEmail;
+    document.getElementById('driver-start-date').value = header.driverStartDate;
     document.getElementById('location').value = header.location;
     document.getElementById('tax-status').value = header.taxStatus;
 }
@@ -369,6 +397,7 @@ function getEmailContent(templateName, task) {
     const replacements = {
         '{{registration}}': header.registration || '[Vehicle Registration]',
         '{{makeModel}}': header.makeModel || '[Make/Model]',
+        '{{sellerEmail}}': header.sellerEmail || '[Seller Email]',
         '{{driverName}}': header.driverName || '[Driver Name]',
         '{{taskName}}': task.task || '[Task Name]'
     };
@@ -392,6 +421,7 @@ async function triggerEmailNotification(task) {
     // Resolve placeholders in the recipient list (e.g., '{{driverEmail}}')
     const recipients = (task.emailRecipients || []).map(recipient => 
         recipient.replace('{{driverEmail}}', header.driverEmail || '')
+                 .replace('{{sellerEmail}}', header.sellerEmail || '')
     ).filter(Boolean); // Filter out any empty recipients
 
     // Use the resolved recipients, or a fallback if the list is empty.
@@ -480,7 +510,7 @@ function applyState(data, sourceName) {
         }
 
         // 1. Apply Header Data (merging with defaults)
-        Object.assign(header, { location: 'Office', taxStatus: 'None Personal Use', ...data.header });
+        Object.assign(header, { location: 'Office', taxStatus: 'None Personal Use', driverStartDate: '', sellerEmail: '', ...data.header });
 
         // 2. Apply Task Data by matching taskId for robustness
         const savedTasksMap = new Map(data.tasks.map(t => [t.taskId, t]));
@@ -575,6 +605,7 @@ function generatePdf() {
     let headerText = [
         `Vehicle Registration: ${header.registration || 'N/A'}`,
         `Make & Model: ${header.makeModel || 'N/A'}`,
+        `Seller Email: ${header.sellerEmail || 'N/A'}`,
         `Driver: ${header.driverName || 'N/A'}`,
         `Location: ${header.location}`,
         `Tax Status: ${header.taxStatus}`,
