@@ -63,6 +63,10 @@ app.post('/api/send-email', async (req, res) => {
  * Helper function for GitHub API requests
  */
 async function githubApiRequest(endpoint, options = {}) {
+  if (!GITHUB_PAT) {
+    // This will be caught by the endpoint's try/catch block
+    throw new Error('Server configuration error: GITHUB_PAT is not set on the server.');
+  }
   const url = `${GITHUB_API_URL}/repos/${REPO_OWNER}/${REPO_NAME}${endpoint}`;
   const defaultOptions = {
     headers: {
