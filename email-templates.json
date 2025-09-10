@@ -5,7 +5,7 @@
     },
     "driver-welcome": {
         "subject": "Welcome & Information for Your New Vehicle: {{registration}}",
-        "body": "Hi {{driverName}},\n\nWelcome to the fleet! This email contains important information regarding your new vehicle ({{registration}}).\n\nPlease review the attached documents and let us know if you have any questions.\n\nBest regards,\nFleet Management"
+        "body": "Hi {{driverName}},\n\nWelcome to the fleet! This email contains important information regarding your new vehicle ({{registration}}).\n\nWe have completed the following initial setup tasks:\n- The vehicle has been insured and taxed.\n- It has been added to our M6 Toll ANPR system.\n- The Clean Air Zone (CAZ) status has been checked.\n- A fuel card has been ordered and will be with you shortly. The PIN for the card will be sent to you separately via email.\n\nTo complete the setup, please can you provide us with a copy of your current DVLA license (front and back).\n\nIf your agreement states this vehicle is for 'None Personal Use', you are required to sign a declaration to avoid company van tax. Please use the following link to digitally sign the agreement: https://docuseal.com/d/tN58axws2YMpPE\n\nIf you are receiving an electric vehicle, we also recommend looking into switching to an EV-friendly electricity tariff for your home charging to save on costs, as many providers offer cheaper overnight rates.\n\nPlease let us know if you have any questions.\n\nBest regards,\nFleet Management"
     },
     "ev-advice": {
         "subject": "Switching to an EV Tariff for {{registration}}",
@@ -21,7 +21,7 @@
     },
     "signwriting-proof-request": {
         "subject": "Signwriting Proof Request for {{registration}}",
-        "body": "Hi Team,\n\nPlease can you provide a signwriting proof for the following vehicle:\n\nRegistration: {{registration}}\nMake & Model: {{makeModel}}\n\nThank you."
+        "body": "Hi Stripmaster Team,\n\nPlease can you provide a signwriting proof for the following vehicle:\n\nRegistration: {{registration}}\nMake & Model: {{makeModel}}\n\nThank you.\n\nDavid"
     },
     "default": {
         "subject": "Fleet Update: {{taskName}} for {{registration}}",
