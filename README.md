@@ -40,16 +40,21 @@ npm install
 
 The application uses a `.env` file to manage secret keys for sending emails.
 
-1.  Create a new file named `.env` in the root of the project directory.
-2.  Add your Resend API key to this file:
+1.  **Create a `.env` file**: In the root of the project, create a file named `.env`.
+2.  **Add Environment Variables**: Add the following keys to the file.
+    -   `RESEND_API_KEY`: Your API key from Resend for sending emails.
+    -   `GITHUB_PAT`: A GitHub Personal Access Token (classic) with `repo` scope. This is required for saving and loading progress.
 
     ```
     RESEND_API_KEY=re_your_api_key_here
+    GITHUB_PAT=ghp_your_token_here
     ```
 
-    > **Note**: The `.gitignore` file is configured to prevent the `.env` file from being committed to the repository.
+3.  **Vercel Configuration**: When deploying to Vercel, make sure to add `RESEND_API_KEY` and `GITHUB_PAT` to your project's Environment Variables in the Vercel dashboard.
 
-## 🚀 Usage
+> **Security Note**: The `.gitignore` file is configured to prevent the `.env` file from being committed to the repository. Never commit your secret keys.
+
+## 🚀 Running Locally
 
 ### 1. Running the Application
 
@@ -72,15 +77,7 @@ The application consists of a static frontend and a Node.js backend for handling
 3.  **Open the Application:**
     Open your web browser and navigate to `http://localhost:8080`.
 
-### 2. GitHub Personal Access Token (PAT)
-
-The first time you load the application, it will prompt you for a GitHub Personal Access Token (PAT). This is required to save progress to your GitHub repository.
-
-1.  Follow this guide to create a new PAT (classic).
-2.  When selecting scopes, check the box for **`repo`**.
-3.  Copy the generated token and paste it into the application prompt. The token will be saved in your browser's `localStorage` for future sessions.
-
-### 3. Using the Application
+### 2. Using the Application
 
 -   **Fill in Details**: Start by entering the Vehicle Registration, Make & Model, and Driver details at the top.
 -   **Complete Tasks**: Expand each phase and update the status of tasks. The progress bar will update automatically.
