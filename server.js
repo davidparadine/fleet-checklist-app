@@ -141,6 +141,11 @@ app.get('/api/github/load', async (req, res) => {
     const data = await githubApiRequest('/contents/progress');
     res.status(200).json(data);
   } catch (error) {
+    // If the directory doesn't exist, GitHub returns a 404. This is not a server crash.
+    // We can return an empty array to the frontend so it shows "No saved files".
+    if (error.message.includes('404')) {
+      return res.status(200).json([]);
+    }
     console.error('GitHub List Files Error:', error);
     res.status(500).json({ message: error.message });
   }
