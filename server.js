@@ -13,12 +13,14 @@ const cors = require('cors');
 const app = express();
 app.use(express.json());
 
-// This allows your frontend (running on a different port during development) to call the API.
-// In a real production environment, you might serve the frontend and backend from the same origin.
-app.use(cors());
+// Configure CORS to be more secure
+const corsOptions = {
+  // In production, set this to your frontend's domain.
+  // For local dev, you can allow localhost:8080.
+  origin: process.env.CORS_ORIGIN || 'http://localhost:8080'
+};
 
-// Serve your static frontend files (index.html, app.js, etc.)
-app.use(express.static(__dirname));
+app.use(cors(corsOptions));
 
 // IMPORTANT: Store your API key in an environment variable, not in the code.
 const resend = new Resend(process.env.RESEND_API_KEY);
@@ -51,7 +53,6 @@ app.post('/api/send-email', async (req, res) => {
   }
 });
 
-const PORT = 3000;
-app.listen(PORT, () => {
-  console.log(`Server running. Open http://localhost:${PORT} in your browser.`);
-});
+
+// Export the app for Vercel
+module.exports = app;

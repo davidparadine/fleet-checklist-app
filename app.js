@@ -28,12 +28,12 @@ let emailTemplates = {};
  * Main initialization function that runs when the page loads.
  */
 window.onload = async function() {
-    // Prompt for GitHub PAT if not in localStorage
-    let pat = localStorage.getItem('github_pat');
+    // Prompt for GitHub PAT if not in sessionStorage for better security
+    let pat = sessionStorage.getItem('github_pat');
     if (!pat) {
-        pat = prompt('Enter your GitHub Personal Access Token (PAT) for saving progress. This will be stored in your browser.');
+        pat = prompt('Enter your GitHub Personal Access Token (PAT) for saving progress. This will be stored for the session only.');
         if (pat) {
-            localStorage.setItem('github_pat', pat);
+            sessionStorage.setItem('github_pat', pat);
         } else {
             alert('A PAT is required for saving progress to GitHub. The save button will be disabled. Please refresh to try again.');
         }
@@ -115,7 +115,7 @@ function groupTasksByPhase() {
  * Restores the checklist progress from the browser's localStorage.
  */
 function restoreFromLocalStorage() {
-    const saved = localStorage.getItem('checklistProgress');
+    const saved = sessionStorage.getItem('checklistProgress');
     if (saved) {
         try {
             const data = JSON.parse(saved);
@@ -163,10 +163,15 @@ function setupEventListeners() {
 
     // Attach listeners for action buttons
     document.getElementById('save-btn').addEventListener('click', saveToGitHub);
+    document.getElementById('load-github-btn').addEventListener('click', showGitHubLoadModal);
     document.getElementById('load-file').addEventListener('change', (event) => loadFromFile(event.target.files[0]));
     document.getElementById('pdf-btn').addEventListener('click', generatePdf);
     document.getElementById('reset-btn').addEventListener('click', resetChecklist);
+
+    // Modal listeners
+    document.querySelector('.close-button').addEventListener('click', () => document.getElementById('github-load-modal').style.display = 'none');
 }
+
 
 // === FORM RENDERING ===
 
@@ -337,7 +342,7 @@ function saveToLocalStorage() {
         header, 
         tasks: structuredClone(tasks) // Deep copy to avoid reference issues
     };
-    localStorage.setItem('checklistProgress', JSON.stringify(dataToSave));
+    sessionStorage.setItem('checklistProgress', JSON.stringify(dataToSave));
 }
 
 // === UI UPDATES ===
@@ -464,7 +469,7 @@ async function triggerEmailNotification(task) {
  * Saves the current progress to a file in the GitHub repository.
  */
 async function saveToGitHub() {
-    const pat = localStorage.getItem('github_pat');
+    const pat = sessionStorage.getItem('github_pat');
     if (!pat) {
         showStatus('Error: GitHub PAT not found. Please refresh the page and enter your token to save.', 'error');
         return;
@@ -546,7 +551,102 @@ async function saveToGitHub() {
         statusEl.innerHTML = `<div class="error">❌ Save failed: ${error.message}</div>`;
     } finally {
         saveBtn.disabled = false;
-        saveBtn.textContent = '💾 Save Progress to GitHub & Google Drive';
+        saveBtn.textContent = '💾 Save Progress to GitHub';
+    }
+}
+
+/**
+ * Shows a modal with a list of saved files from the GitHub repository.
+ */
+async function showGitHubLoadModal() {
+    const pat = sessionStorage.getItem('github_pat');
+    if (!pat) {
+        showStatus('Error: GitHub PAT not found. Please refresh and enter your token.', 'error');
+        return;
+    }
+
+    const modal = document.getElementById('github-load-modal');
+    const fileListDiv = document.getElementById('github-file-list');
+    modal.style.display = 'block';
+    fileListDiv.innerHTML = '<p>🔄 Loading files from GitHub...</p>';
+
+    try {
+        const response = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/progress`, {
+            headers: {
+                'Authorization': `token ${pat}`,
+                'User-Agent': 'FleetChecklistApp/1.0'
+            }
+        });
+
+        if (!response.ok) {
+            if (response.status === 404) {
+                throw new Error('The "progress" directory does not exist in the repository.');
+            }
+            const errorData = await response.json();
+            throw new Error(`GitHub API Error: ${errorData.message}`);
+        }
+
+        const files = await response.json();
+        fileListDiv.innerHTML = ''; // Clear loading message
+
+        if (files.length === 0) {
+            fileListDiv.innerHTML = '<p>No saved progress files found in the repository.</p>';
+            return;
+        }
+
+        // Sort files by name descending (most recent first)
+        files.sort((a, b) => b.name.localeCompare(a.name));
+
+        files.forEach(file => {
+            if (file.type === 'file' && file.name.endsWith('.json')) {
+                const fileItem = document.createElement('a');
+                fileItem.className = 'github-file-item';
+                fileItem.textContent = file.name;
+                fileItem.href = '#';
+                fileItem.onclick = (e) => {
+                    e.preventDefault();
+                    if (confirm(`Are you sure you want to load progress from ${file.name}? This will overwrite your current unsaved changes.`)) {
+                        loadFromGitHub(file.path);
+                        modal.style.display = 'none';
+                    }
+                };
+                fileListDiv.appendChild(fileItem);
+            }
+        });
+
+    } catch (error) {
+        console.error('Error fetching GitHub files:', error);
+        fileListDiv.innerHTML = `<p class="error">❌ Failed to load files: ${error.message}</p>`;
+    }
+}
+
+/**
+ * Loads progress from a specific file path in the GitHub repository.
+ * @param {string} filePath - The full path to the file in the repo (e.g., 'progress/vehicle_...json').
+ */
+async function loadFromGitHub(filePath) {
+    const pat = sessionStorage.getItem('github_pat');
+    showStatus('🔄 Loading file from GitHub...', 'warning');
+
+    try {
+        const response = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${filePath}`, {
+            headers: {
+                'Authorization': `token ${pat}`,
+                'User-Agent': 'FleetChecklistApp/1.0'
+            }
+        });
+
+        if (!response.ok) throw new Error('Failed to fetch file content.');
+
+        const fileData = await response.json();
+        const jsonContent = atob(fileData.content); // Decode base64 content
+        const data = JSON.parse(jsonContent);
+
+        // Use the same logic as loadFromFile to apply the data
+        applyLoadedData(data, filePath);
+
+    } catch (error) {
+        showStatus(`❌ Error loading from GitHub: ${error.message}`, 'error');
     }
 }
 
@@ -559,47 +659,51 @@ function loadFromFile(file) {
     
     const reader = new FileReader();
     reader.onload = function(e) {
-        try {
-            const data = JSON.parse(e.target.result);
-            
-            const newHeader = {
-                location: 'Office',
-                makeModel: '',
-                taxStatus: 'None Personal Use',
-                ...data.header
-            };
-            Object.assign(header, newHeader);
-
-            updateHeaderFields();
-            
-            if (data.tasks && Array.isArray(data.tasks)) {
-                tasks.forEach((task, index) => {
-                    if (data.tasks[index]) {
-                        // Restore only the properties we care about, explicitly ignoring 'notes'
-                        const savedTask = data.tasks[index];
-                        if (savedTask) {
-                            task.status = savedTask.status;
-                            task.dateActioned = savedTask.dateActioned;
-                            if (savedTask.customValue) {
-                                task.customValue = savedTask.customValue;
-                            }
-                        }
-                    }
-                });
-
-                groupTasksByPhase();
-            }
-            
-            renderForm();
-            updateProgress();
-            saveToLocalStorage();
-            
-            showStatus(`✅ Progress loaded successfully from ${file.name}!`, 'success');
-        } catch (error) {
-            showStatus(`❌ Error loading file: ${error.message}`, 'error');
-        }
+        applyLoadedData(JSON.parse(e.target.result), file.name);
     };
     reader.readAsText(file);
+}
+
+/**
+ * Helper function to apply data from a loaded file (local or GitHub) to the application state.
+ * @param {object} data - The parsed JSON data.
+ * @param {string} sourceName - The name of the file or source for status messages.
+ */
+function applyLoadedData(data, sourceName) {
+    try {
+        const newHeader = {
+            location: 'Office',
+            makeModel: '',
+            taxStatus: 'None Personal Use',
+            ...data.header
+        };
+        Object.assign(header, newHeader);
+
+        updateHeaderFields();
+        
+        if (data.tasks && Array.isArray(data.tasks)) {
+            tasks.forEach((task, index) => {
+                if (data.tasks[index]) {
+                    const savedTask = data.tasks[index];
+                    if (savedTask) {
+                        task.status = savedTask.status;
+                        task.dateActioned = savedTask.dateActioned;
+                        if (savedTask.customValue) {
+                            task.customValue = savedTask.customValue;
+                        }
+                    }
+                }
+            });
+            groupTasksByPhase();
+        }
+        
+        renderForm();
+        updateProgress();
+        saveToLocalStorage();
+        showStatus(`✅ Progress loaded successfully from ${sourceName}!`, 'success');
+    } catch (error) {
+        showStatus(`❌ Error applying loaded data: ${error.message}`, 'error');
+    }
 }
 
 /**
@@ -607,7 +711,7 @@ function loadFromFile(file) {
  */
 function resetChecklist() {
     if (confirm('Are you sure you want to reset all progress? This action cannot be undone and will clear your local saves.')) {
-        localStorage.removeItem('checklistProgress');
+        sessionStorage.removeItem('checklistProgress');
         Object.assign(header, { 
             registration: '', 
             makeModel: '',
@@ -635,8 +739,8 @@ function resetChecklist() {
 function showStatus(message, type = 'info') {
     const statusEl = document.getElementById('save-status');
     statusEl.className = type;
-    statusEl.innerHTML = message;
-    setTimeout(() => { statusEl.innerHTML = ''; }, 5000);
+    statusEl.textContent = message; // Use textContent to prevent XSS
+    setTimeout(() => { statusEl.textContent = ''; }, 5000);
 }
 
 /**
@@ -650,6 +754,10 @@ function generatePdf() {
     }
     const doc = new jsPDF();
 
+    // Find the CAZ task to get its status for the header
+    const cazTask = tasks.find(t => t.taskId === '5');
+    const cazStatus = cazTask && cazTask.customValue ? cazTask.customValue : 'N/A';
+
     // 1. Add Title
     doc.setFontSize(18);
     doc.text('Fleet Vehicle Onboarding Report', 14, 22);
@@ -657,15 +765,16 @@ function generatePdf() {
     // 2. Add Header Details
     doc.setFontSize(11);
     doc.setTextColor(100);
-    const headerDetails = `
-Vehicle Registration: ${header.registration || 'N/A'}
-Make & Model: ${header.makeModel || 'N/A'}
-Driver: ${header.driverName || 'N/A'}
-Location: ${header.location}
-Tax Status: ${header.taxStatus}
-Report Generated: ${new Date().toLocaleString()}
-    `;
-    doc.text(headerDetails, 14, 32);
+    let headerText = [
+        `Vehicle Registration: ${header.registration || 'N/A'}`,
+        `Make & Model: ${header.makeModel || 'N/A'}`,
+        `Driver: ${header.driverName || 'N/A'}`,
+        `Location: ${header.location}`,
+        `Tax Status: ${header.taxStatus}`,
+        `Clean Air Zone (CAZ) Status: ${cazStatus}`,
+        `Report Generated: ${new Date().toLocaleString()}`
+    ];
+    doc.text(headerText, 14, 32);
 
     // 3. Prepare data for the table
     const tableBody = [];
@@ -676,9 +785,15 @@ Report Generated: ${new Date().toLocaleString()}
         tableBody.push([{ content: phase, colSpan: 4, styles: { fontStyle: 'bold', fillColor: [230, 230, 230] } }]);
         
         phaseGroups[phase].forEach(task => {
+            // Append custom value to the task description if it exists
+            let taskDescription = task.task;
+            if (task.customInput && task.customValue) {
+                taskDescription += ` (${task.customValue})`;
+            }
+
             tableBody.push([
                 task.taskId,
-                task.task,
+                taskDescription,
                 task.status,
                 task.dateActioned || ''
             ]);
@@ -686,7 +801,7 @@ Report Generated: ${new Date().toLocaleString()}
     });
 
     // 4. Create the table using jspdf-autotable
-    doc.autoTable({ head: tableHead, body: tableBody, startY: 70 });
+    doc.autoTable({ head: tableHead, body: tableBody, startY: 80 });
 
     // 5. Save the PDF
     doc.save(`FleetClean_Report_${header.registration || 'NEW'}_${new Date().toISOString().split('T')[0]}.pdf`);

@@ -9,7 +9,7 @@
 </head>
 <body>
     <h1>🚛 Fleet Vehicle Onboarding Checklist</h1>
-    <p><em>Complete all phases for DVSA compliance and safe handover. Progress auto-saves to Google Drive via GitHub.</em></p>
+    <p><em>Complete all phases for DVSA compliance and safe handover. Progress can be saved to GitHub for backup.</em></p>
 
     <!-- Header Section -->
     <div class="header-section">
@@ -54,6 +54,7 @@
     <!-- Action Buttons -->
     <div style="text-align: center; margin: 30px 0;">
         <button id="save-btn">💾 Save Progress to GitHub</button>
+        <button id="load-github-btn">☁️ Load from GitHub</button>
         <br>
         <button id="pdf-btn">📄 Generate PDF Report</button>
         <br>
@@ -66,8 +67,27 @@
     <!-- Status Messages -->
     <div id="save-status"></div>
 
-    <script src="https://unpkg.com/jspdf@latest/dist/jspdf.umd.min.js"></script>
-    <script src="https://unpkg.com/jspdf-autotable@latest/dist/jspdf.plugin.autotable.js"></script>
+    <!-- Modal for loading from GitHub -->
+    <div id="github-load-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <h2>Select a File to Load</h2>
+            <div id="github-file-list">
+                <p>Loading files...</p>
+            </div>
+        </div>
+    </div>
+
+
+    <script
+        src="https://unpkg.com/jspdf@2.5.1/dist/jspdf.umd.min.js"
+        integrity="sha384-qZvrmS2ekKPF2mSznTQsxqPgnpkI4DNTlrdUmTzrDgektczlKNRRhy5X5AAOnx5S"
+        crossorigin="anonymous"></script>
+    <script
+        src="https://unpkg.com/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.js"
+        integrity="sha384-vGDy91Iy6qIFd9Lp2I2mZPFsHhD2l2hK2M0oK2YJtBfWewu2ZzB2U/0M2x3i4e3d"
+        crossorigin="anonymous"></script>
+
     <script src="app.js"></script>
 </body>
 </html>
