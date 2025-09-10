@@ -14,9 +14,31 @@ const GITHUB_API_URL = 'https://api.github.com';
 const REPO_OWNER = 'davidparadine';
 const REPO_NAME = 'fleet-checklist-app';
 
+// Define a whitelist of allowed origins.
+// The `CORS_ORIGIN` environment variable can contain a comma-separated list of domains.
+// Your GitHub Pages URL is added as a default.
+const whitelist = (process.env.CORS_ORIGIN || 'http://localhost:8080,https://davidparadine.github.io,https://fleet-checklist-app.vercel.app').split(',');
+
 const corsOptions = {
-  // In production, set this to your frontend's domain.
-  origin: process.env.CORS_ORIGIN || 'http://localhost:8080',
+  origin: function (origin, callback) {
+    // Regex to allow Vercel preview URLs, e.g., https://fleet-checklist-app-*.vercel.app
+    const vercelPreviewRegex = /^https:\/\/fleet-checklist-app-.*\.vercel\.app$/; 
+    // The main production URL
+    const vercelProdUrl = 'https://fleet-checklist-app.vercel.app';
+
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+
+    if (
+      whitelist.indexOf(origin) !== -1 ||
+      origin === vercelProdUrl || // Explicitly allow the production URL
+      vercelPreviewRegex.test(origin)
+    ) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
 };
 
 app.use(cors(corsOptions));
@@ -25,8 +47,8 @@ app.use(cors(corsOptions));
 app.options('*', cors(corsOptions));
 
 // A simple health check endpoint to verify the server is running
-app.get('/api/send-email', (req, res) => {
-  res.status(200).send('✅ FleetClean Email API is running.');
+app.get('/api/health', (req, res) => {
+  res.status(200).send('✅ FleetClean API is running.');
 });
 
 // IMPORTANT: Store your API key in an environment variable, not in the code.
@@ -95,38 +117,46 @@ async function githubApiRequest(endpoint, options = {}) {
  * Endpoint to save a file to GitHub.
  */
 app.post('/api/github/save', async (req, res) => {
-  const { fileName, content } = req.body;
+  const { fileName: baseFileName, content } = req.body;
 
-  if (!fileName || !content) {
+  if (!baseFileName || !content) {
     return res.status(400).json({ message: 'Missing fileName or content.' });
   }
 
-  try {
-    let existingFileSha = null;
+  // Securely construct the full path on the server to prevent path traversal.
+  const fullPath = `progress/${baseFileName}`;
+
+  const getExistingFile = async () => {
     try {
-      const fileData = await githubApiRequest(`/contents/${fileName}`);
-      existingFileSha = fileData.sha;
+      // Attempt to get the file's metadata (including its SHA)
+      return await githubApiRequest(`/contents/${fullPath}`);
     } catch (error) {
-      if (!error.message.includes('404')) {
-        throw error; // Re-throw if it's not a "file not found" error
+      // If the error is a 404, it means the file doesn't exist yet, which is fine.
+      if (error.message.includes('404')) {
+        return null;
       }
+      // For any other error, re-throw it to be caught by the main catch block.
+      throw error;
     }
+  };
+
+  try {
+    const existingFile = await getExistingFile();
 
     const requestBody = {
-      message: `Fleet checklist update: ${fileName.split('/').pop()}`,
+      message: `Fleet checklist update: ${baseFileName}`,
       content: Buffer.from(JSON.stringify(content, null, 2)).toString('base64'),
       branch: 'main',
+      // If the file exists, include its SHA to update it. Otherwise, this is a new file.
+      ...(existingFile && { sha: existingFile.sha }),
     };
 
-    if (existingFileSha) {
-      requestBody.sha = existingFileSha;
-    }
-
-    const data = await githubApiRequest(`/contents/${fileName}`, {
+    const data = await githubApiRequest(`/contents/${fullPath}`, {
       method: 'PUT',
       body: JSON.stringify(requestBody),
     });
 
+    // GitHub returns 201 for creation and 200 for update. Both are success cases.
     res.status(200).json(data);
   } catch (error) {
     console.error('GitHub Save Error:', error);
@@ -158,9 +188,10 @@ app.get('/api/github/load', async (req, res) => {
 app.get('/api/github/load/:fileName', async (req, res) => {
   const { fileName } = req.params;
   try {
-    // The file path is already encoded by the browser, but we ensure it's safe.
-    const safeFilePath = `progress/${encodeURIComponent(fileName)}`;
-    const data = await githubApiRequest(`/contents/${safeFilePath}`);
+    // The frontend sends the filename (e.g., "vehicle_ABC_123.json").
+    // We construct the full, safe path on the server.
+    const fullPath = `progress/${fileName}`;
+    const data = await githubApiRequest(`/contents/${fullPath}`);
     res.status(200).json(data);
   } catch (error) {
     console.error('GitHub Get File Error:', error);
