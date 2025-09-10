@@ -7,48 +7,28 @@ const cors = require('cors');
 const path = require('path'); // Import the path module
 
 const app = express();
+
+// --- Middleware ---
+app.use(cors()); // Enable CORS for all origins for local development simplicity
 app.use(express.json());
 
-// --- Static File Serving for Local Development ---
+// --- Static File Serving ---
 // Serve static files (index.html, app.js, etc.) from the project's root directory.
 app.use(express.static(path.join(__dirname, '/')));
 
-// Configure CORS to be more secure
-// Define a whitelist of allowed origins.
-// The `CORS_ORIGIN` environment variable can contain a comma-separated list of domains.
-const whitelist = (process.env.CORS_ORIGIN || 'http://localhost:3000,https://fleet-checklist-app.vercel.app').split(',');
-
-const corsOptions = {
-  origin: function (origin, callback) {
-    // Regex to allow Vercel preview URLs, e.g., https://fleet-checklist-app-*.vercel.app
-    const vercelPreviewRegex = /^https:\/\/fleet-checklist-app-.*\.vercel\.app$/; 
-
-    // Allow requests with no origin (like mobile apps or curl requests)
-    if (!origin) return callback(null, true);
-
-    if (
-      whitelist.indexOf(origin) !== -1 ||
-      vercelPreviewRegex.test(origin)
-    ) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
-};
-
-app.use(cors(corsOptions));
-
-// Explicitly handle preflight requests for all routes
-app.options('*', cors(corsOptions));
-
+// --- API Endpoints ---
 // A simple health check endpoint to verify the server is running
 app.get('/api/health', (req, res) => {
   res.status(200).send('✅ FleetClean API is running.');
 });
 
 // IMPORTANT: Store your API key in an environment variable, not in the code.
-const resend = new Resend(process.env.RESEND_API_KEY);
+const resendApiKey = process.env.RESEND_API_KEY;
+if (!resendApiKey) {
+  console.error('❌ FATAL ERROR: RESEND_API_KEY is not defined in the .env file.');
+  process.exit(1); // Exit the process with an error code
+}
+const resend = new Resend(resendApiKey);
 
 app.post('/api/send-email', async (req, res) => {
   const { from, to, subject, body } = req.body;
@@ -60,7 +40,7 @@ app.post('/api/send-email', async (req, res) => {
   try {
     const { data, error } = await resend.emails.send({
       from: `Fleet Management <${from}>`,
-      reply_to: 'd.paradinejr@dpmep.com',
+      reply_to: 'd.paradinejr@dpmep.com', // Hardcoded as requested
       to: to,
       subject: subject,
       text: body, // Resend uses 'text' for the plain text body
@@ -78,16 +58,9 @@ app.post('/api/send-email', async (req, res) => {
   }
 });
 
-// --- Server Listening for Local Development ---
+// --- Server Listening ---
 const PORT = process.env.PORT || 3000;
 
-// This block ensures `app.listen` is only called when running `node server.js` directly.
-// It will be ignored by Vercel, which imports the `app` object as a module.
-if (require.main === module) {
-  app.listen(PORT, () => {
-    console.log(`✅ Server is running. Open your browser at http://localhost:${PORT}`);
-  });
-}
-
-// Export the app for serverless environments like Vercel
-module.exports = app;
+app.listen(PORT, () => {
+  console.log(`✅ Server is running. Open your browser at http://localhost:${PORT}`);
+});

@@ -6,10 +6,9 @@
  */
 
 // === CONFIGURATION ===
-// Dynamically set the API base URL based on the hostname
-const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-// For local development, use relative paths. For production, use the full Vercel URL.
-const API_BASE_URL = isLocal ? '' : 'https://fleet-checklist-app.vercel.app';
+// The API base URL. For a local setup where the server serves the frontend,
+// a relative path (empty string) is sufficient.
+const API_BASE_URL = '';
 
 // === GLOBAL DATA ===
 let header = {
@@ -104,8 +103,8 @@ function groupTasksByPhase() {
  * Restores the checklist progress from the browser's localStorage.
  */
 function restoreFromLocalStorage() {
-    const saved = sessionStorage.getItem('checklistProgress');
-    if (saved) applyState(JSON.parse(saved), 'session');
+    const saved = localStorage.getItem('checklistProgress');
+    if (saved) applyState(JSON.parse(saved), 'local');
 }
 
 /**
@@ -121,6 +120,7 @@ function setupEventListeners() {
 
     // Attach listeners for action buttons
     document.getElementById('load-file').addEventListener('change', (event) => loadFromFile(event.target.files[0]));
+    document.getElementById('save-file-btn').addEventListener('click', saveToFile);
     document.getElementById('pdf-btn').addEventListener('click', generatePdf);
     document.getElementById('reset-btn').addEventListener('click', resetChecklist);
 }
@@ -256,7 +256,7 @@ async function updateTask(index, status, dateActioned = '') {
         const previousStatus = task.status;
         task.status = status;
 
-        // If status changes from Pending, set date to today. User can still override it.
+        // As requested, if status changes from Pending, always set the date to today.
         if (previousStatus === 'Pending' && status !== 'Pending') {
             task.dateActioned = new Date().toISOString().split('T')[0];
         }
@@ -266,7 +266,7 @@ async function updateTask(index, status, dateActioned = '') {
             await triggerEmailNotification(task);
         }
 
-        // Update the date input field in the UI
+        // Update the date input field in the UI to reflect the new state
         const dateInput = document.getElementById(`date-${index}`);
         if (dateInput) {
             dateInput.value = tasks[index].dateActioned;
@@ -295,7 +295,7 @@ function saveToLocalStorage() {
         header, 
         tasks: structuredClone(tasks) // Deep copy to avoid reference issues
     };
-    sessionStorage.setItem('checklistProgress', JSON.stringify(dataToSave));
+    localStorage.setItem('checklistProgress', JSON.stringify(dataToSave));
 }
 
 // === UI UPDATES ===
@@ -387,8 +387,15 @@ function getEmailContent(templateName, task) {
  */
 async function triggerEmailNotification(task) {
     // Hardcoded from and to addresses as requested.
-    const from = 'fleet@paradine.org.uk';
-    const to = ['d.paradinejr@gmail.com'];
+    const from = 'fleet@paradine.org.uk'; // This can be configured in Resend
+    
+    // Resolve placeholders in the recipient list (e.g., '{{driverEmail}}')
+    const recipients = (task.emailRecipients || []).map(recipient => 
+        recipient.replace('{{driverEmail}}', header.driverEmail || '')
+    ).filter(Boolean); // Filter out any empty recipients
+
+    // Use the resolved recipients, or a fallback if the list is empty.
+    const to = recipients.length > 0 ? recipients : ['d.paradinejr@gmail.com'];
     
     const { subject, body } = getEmailContent(task.emailTemplate, task);
 
@@ -413,6 +420,32 @@ async function triggerEmailNotification(task) {
     } catch (error) {
         console.error('Email sending error:', error);
         showStatus(`❌ Failed to send email: ${error.message}`, 'error');
+    }
+}
+
+/**
+ * Saves the current checklist state to a JSON file and triggers a download.
+ */
+function saveToFile() {
+    try {
+        const dataToSave = {
+            header,
+            tasks: structuredClone(tasks)
+        };
+        const dataStr = JSON.stringify(dataToSave, null, 2); // Pretty-print the JSON
+        const blob = new Blob([dataStr], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `FleetClean_Progress_${header.registration || 'NEW'}_${new Date().toISOString().split('T')[0]}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        showStatus('✅ Progress saved to file!', 'success');
+    } catch (error) {
+        showStatus(`❌ Failed to save file: ${error.message}`, 'error');
     }
 }
 
@@ -449,17 +482,21 @@ function applyState(data, sourceName) {
         // 1. Apply Header Data (merging with defaults)
         Object.assign(header, { location: 'Office', taxStatus: 'None Personal Use', ...data.header });
 
-        // 2. Apply Task Data
-        if (tasks.length === data.tasks.length) {
-            tasks.forEach((task, index) => {
-                const savedTask = data.tasks[index];
+        // 2. Apply Task Data by matching taskId for robustness
+        const savedTasksMap = new Map(data.tasks.map(t => [t.taskId, t]));
+
+        tasks.forEach(task => {
+            const savedTask = savedTasksMap.get(task.taskId);
+            if (savedTask) {
+                // If a matching task is found in the loaded data, apply its state
                 task.status = savedTask.status || 'Pending';
                 task.dateActioned = savedTask.dateActioned || '';
                 task.customValue = savedTask.customValue || task.customValue;
-            });
-        } else {
-            console.warn('Loaded task list has a different length than the current one. State may be inconsistent.');
-        }
+            }
+            // If no matching task is found, it remains in its default 'Pending' state,
+            // which correctly handles newly added tasks in checklist-data.json.
+        });
+
 
         // 3. Re-render and update UI
         groupTasksByPhase();
@@ -467,8 +504,8 @@ function applyState(data, sourceName) {
         renderForm();
         updateProgress();
         saveToLocalStorage();
-
-        if (sourceName !== 'session') {
+        // Only show status if loading from a file, not from initial local storage restore.
+        if (sourceName !== 'local') {
             showStatus(`✅ Progress loaded from <strong>${sourceName}</strong>!`, 'success');
         }
     } catch (error) {
@@ -481,25 +518,13 @@ function applyState(data, sourceName) {
  * Resets the entire checklist to its initial state.
  */
 function resetChecklist() {
-    if (confirm('Are you sure you want to reset all progress? This action cannot be undone and will clear your local saves.')) {
-        sessionStorage.removeItem('checklistProgress');
-        Object.assign(header, { 
-            registration: '', 
-            makeModel: '',
-            driverName: '', 
-            driverEmail: '',
-            location: 'Office',
-            taxStatus: 'None Personal Use'
-        });
-        
-        // Re-initialize the entire checklist from scratch
-        initChecklist().then(() => {
-            groupTasksByPhase();
-            updateHeaderFields();
-            renderForm();
-            updateProgress();
-            showStatus('🔄 Checklist has been reset.', 'info');
-        });
+    if (confirm('Are you sure you want to reset all progress? This will clear your current session and reload the application.')) {
+        localStorage.removeItem('checklistProgress');
+        showStatus('🔄 Checklist has been reset. Reloading...', 'info', 0); // Show indefinite message
+
+        // Reload the page to get a completely fresh state from the source JSON files.
+        // This is more robust than manually resetting state.
+        window.location.reload();
     }
 }
 
@@ -513,7 +538,6 @@ function showStatus(message, type = 'info', timeout = 5000) {
     // Create status element if it doesn't exist
     let statusEl = document.getElementById('save-status');
     if (!statusEl) return; // Or create it dynamically if preferred
-    const statusEl = document.getElementById('save-status');
     // Clear any existing timeout to prevent it from clearing a new message prematurely.
     if (statusEl.timeoutId) {
         clearTimeout(statusEl.timeoutId);

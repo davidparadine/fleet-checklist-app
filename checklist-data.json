@@ -24,7 +24,8 @@
         "requiresEmail": true,
         "emailTemplate": "insurance-notification",
         "emailRecipients": [
-            "insurance@yourfleet.com"
+            "d.paradinejr@dpmep.com",
+            "matt@genesisinsuranceservices.co.uk"
         ]
     },
     {

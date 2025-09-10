@@ -48,9 +48,6 @@ The application uses a `.env` file to manage secret keys for sending emails.
     RESEND_API_KEY=re_your_api_key_here
     ```
 
-3.  **Vercel Configuration**: When deploying to Vercel, make sure to add `RESEND_API_KEY` and `GITHUB_PAT` to your project's Environment Variables in the Vercel dashboard.
-3.  **Vercel Configuration**: When deploying to Vercel, make sure to add `RESEND_API_KEY` to your project's Environment Variables in the Vercel dashboard.
-
 > **Security Note**: The `.gitignore` file is configured to prevent the `.env` file from being committed to the repository. Never commit your secret keys.
 
 ## 🚀 Running Locally
