@@ -8,7 +8,10 @@
 // === CONFIGURATION ===
 const REPO_OWNER = 'davidparadine';
 const REPO_NAME = 'fleet-checklist-app';
-const API_BASE_URL = 'https://fleet-checklist-app.vercel.app'; // Your Vercel deployment URL
+
+// Dynamically set the API base URL based on the hostname
+const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+const API_BASE_URL = isLocal ? 'http://localhost:3000' : 'https://fleet-checklist-app.vercel.app';
 
 // === GLOBAL DATA ===
 let header = {
@@ -106,38 +109,7 @@ function groupTasksByPhase() {
  */
 function restoreFromLocalStorage() {
     const saved = sessionStorage.getItem('checklistProgress');
-    if (saved) {
-        try {
-            const data = JSON.parse(saved);
-            // Create a new header object by merging defaults with saved data
-            const newHeader = {
-                location: 'Office',
-                makeModel: '',
-                taxStatus: 'None Personal Use',
-                ...data.header
-            };
-            Object.assign(header, newHeader);
-            if (data.tasks && Array.isArray(data.tasks)) {
-                tasks.forEach((task, index) => {
-                    if (data.tasks[index]) {
-                        // Restore only the properties we care about, explicitly ignoring 'notes'
-                        const savedTask = data.tasks[index];
-                        if (savedTask) {
-                            task.status = savedTask.status;
-                            task.dateActioned = savedTask.dateActioned;
-                            if (savedTask.customValue) {
-                                task.customValue = savedTask.customValue;
-                            }
-                        }
-                    }
-                });
-
-            }
-            groupTasksByPhase(); // Re-group tasks after restoring progress
-        } catch (error) {
-            console.error('Error loading saved progress from localStorage:', error);
-        }
-    }
+    if (saved) applyState(JSON.parse(saved), 'session');
 }
 
 /**
@@ -462,9 +434,9 @@ async function saveToGitHub() {
     const saveBtn = document.getElementById('save-btn');
     const statusEl = document.getElementById('save-status');
     saveBtn.disabled = true;
-    saveBtn.textContent = 'Saving...';
-    statusEl.innerHTML = '<div class="warning">🔄 Saving progress to GitHub...</div>';
-
+    saveBtn.textContent = 'Saving...';    
+    showStatus('🔄 Saving progress to GitHub...', 'warning', 0); // Show indefinitely until success/error
+    
     const progressData = {
         header,
         tasks: JSON.parse(JSON.stringify(tasks)),
@@ -478,27 +450,28 @@ async function saveToGitHub() {
     };
 
     const timestamp = new Date().toISOString().split('T')[0].replace(/-/g, '');
-    const fileName = `progress/vehicle_${header.registration || 'NEW'}_${timestamp}.json`;
+    // The server will handle adding the 'progress/' directory.
+    const fileName = `vehicle_${header.registration || 'NEW'}_${timestamp}.json`;
 
     try {
         const response = await fetch(`${API_BASE_URL}/api/github/save`, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
+                'Content-Type': 'application/json'
             },
             body: JSON.stringify({ fileName, content: progressData })
         });
 
         if (response.ok) {
-            statusEl.innerHTML = `<div class="success">✅ Progress saved to GitHub! File: <strong>${fileName}</strong></div>`;
+            showStatus(`✅ Progress saved! File: <strong>${fileName}</strong>`, 'success');
             saveToLocalStorage();
         } else {
             const errorData = await response.json();
             throw new Error(errorData.message || `Server responded with status ${response.status}`);
         }
     } catch (error) {
-        console.error('Save error:', error);
-        statusEl.innerHTML = `<div class="error">❌ Save failed: ${error.message}</div>`;
+        console.error('Save error:', error);        
+        showStatus(`❌ Save failed: ${error.message}`, 'error');
     } finally {
         saveBtn.disabled = false;
         saveBtn.textContent = '💾 Save Progress to GitHub';
@@ -512,7 +485,7 @@ async function showGitHubLoadModal() {
     const modal = document.getElementById('github-load-modal');
     const fileListDiv = document.getElementById('github-file-list');
     modal.style.display = 'block';
-    fileListDiv.innerHTML = '<p>🔄 Loading files from GitHub...</p>';
+    fileListDiv.innerHTML = '<div class="status warning">🔄 Loading files from GitHub...</div>';
 
     try {
         const response = await fetch(`${API_BASE_URL}/api/github/load`);
@@ -526,7 +499,7 @@ async function showGitHubLoadModal() {
         fileListDiv.innerHTML = ''; // Clear loading message
 
         if (files.length === 0) {
-            fileListDiv.innerHTML = '<p>No saved progress files found in the repository.</p>';
+            fileListDiv.innerHTML = '<div class="status info">No saved progress files found.</div>';
             return;
         }
 
@@ -552,7 +525,7 @@ async function showGitHubLoadModal() {
 
     } catch (error) {
         console.error('Error fetching GitHub files:', error);
-        fileListDiv.innerHTML = `<p class="error">❌ Failed to load files: ${error.message}</p>`;
+        fileListDiv.innerHTML = `<div class="status error">❌ Failed to load files: ${error.message}</div>`;
     }
 }
 
@@ -572,8 +545,8 @@ async function loadFromGitHub(fileName) {
         const jsonContent = atob(fileData.content); // Decode base64 content from GitHub API response
         const data = JSON.parse(jsonContent);
 
-        // Use the same logic as loadFromFile to apply the data
-        applyLoadedData(data, fileName);
+        // Apply the loaded state to the application
+        applyState(data, fileName);
 
     } catch (error) {
         showStatus(`❌ Error loading from GitHub: ${error.message}`, 'error');
@@ -588,50 +561,55 @@ function loadFromFile(file) {
     if (!file) return;
     
     const reader = new FileReader();
-    reader.onload = function(e) {
-        applyLoadedData(JSON.parse(e.target.result), file.name);
+    reader.onload = (e) => {
+        try {
+            const data = JSON.parse(e.target.result);
+            applyState(data, file.name);
+        } catch (error) {
+            showStatus(`❌ Error parsing file: ${error.message}`, 'error');
+        }
     };
     reader.readAsText(file);
 }
 
 /**
- * Helper function to apply data from a loaded file (local or GitHub) to the application state.
+ * Applies a state object (from a file, GitHub, or localStorage) to the application.
  * @param {object} data - The parsed JSON data.
  * @param {string} sourceName - The name of the file or source for status messages.
  */
-function applyLoadedData(data, sourceName) {
+function applyState(data, sourceName) {
     try {
-        const newHeader = {
-            location: 'Office',
-            makeModel: '',
-            taxStatus: 'None Personal Use',
-            ...data.header
-        };
-        Object.assign(header, newHeader);
-
-        updateHeaderFields();
-        
-        if (data.tasks && Array.isArray(data.tasks)) {
-            tasks.forEach((task, index) => {
-                if (data.tasks[index]) {
-                    const savedTask = data.tasks[index];
-                    if (savedTask) {
-                        task.status = savedTask.status;
-                        task.dateActioned = savedTask.dateActioned;
-                        if (savedTask.customValue) {
-                            task.customValue = savedTask.customValue;
-                        }
-                    }
-                }
-            });
-            groupTasksByPhase();
+        if (!data || !data.header || !Array.isArray(data.tasks)) {
+            throw new Error('Invalid or corrupt data format.');
         }
-        
+
+        // 1. Apply Header Data (merging with defaults)
+        Object.assign(header, { location: 'Office', taxStatus: 'None Personal Use', ...data.header });
+
+        // 2. Apply Task Data
+        if (tasks.length === data.tasks.length) {
+            tasks.forEach((task, index) => {
+                const savedTask = data.tasks[index];
+                task.status = savedTask.status || 'Pending';
+                task.dateActioned = savedTask.dateActioned || '';
+                task.customValue = savedTask.customValue || task.customValue;
+            });
+        } else {
+            console.warn('Loaded task list has a different length than the current one. State may be inconsistent.');
+        }
+
+        // 3. Re-render and update UI
+        groupTasksByPhase();
+        updateHeaderFields();
         renderForm();
         updateProgress();
         saveToLocalStorage();
-        showStatus(`✅ Progress loaded successfully from ${sourceName}!`, 'success');
+
+        if (sourceName !== 'session') {
+            showStatus(`✅ Progress loaded from <strong>${sourceName}</strong>!`, 'success');
+        }
     } catch (error) {
+        console.error('Error applying state:', error);
         showStatus(`❌ Error applying loaded data: ${error.message}`, 'error');
     }
 }
@@ -651,26 +629,35 @@ function resetChecklist() {
             taxStatus: 'None Personal Use'
         });
         
-        loadTasks().then(() => {
+        // Re-initialize the entire checklist from scratch
+        initChecklist().then(() => {
             groupTasksByPhase();
             updateHeaderFields();
             renderForm();
             updateProgress();
-            showStatus('🔄 Checklist has been reset to its initial state.', 'warning');
+            showStatus('🔄 Checklist has been reset.', 'info');
         });
     }
 }
 
 /**
  * Shows a status message to the user.
- * @param {string} message - The message to show.
+ * @param {string} message - The message to show (can include HTML).
  * @param {string} type - The type of message (e.g., 'success', 'error', 'warning').
+ * @param {number} [timeout=5000] - How long to display the message in ms. 0 for indefinite.
  */
-function showStatus(message, type = 'info') {
+function showStatus(message, type = 'info', timeout = 5000) {
     const statusEl = document.getElementById('save-status');
-    statusEl.className = type;
-    statusEl.textContent = message; // Use textContent to prevent XSS
-    setTimeout(() => { statusEl.textContent = ''; }, 5000);
+    // Clear any existing timeout to prevent it from clearing a new message prematurely.
+    if (statusEl.timeoutId) {
+        clearTimeout(statusEl.timeoutId);
+    }
+    statusEl.className = `status ${type}`;
+    statusEl.innerHTML = message; // Use innerHTML to allow for bolding, etc.
+    
+    if (timeout > 0) {
+        statusEl.timeoutId = setTimeout(() => { statusEl.innerHTML = ''; }, timeout);
+    }
 }
 
 /**
