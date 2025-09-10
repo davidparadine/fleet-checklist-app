@@ -21,7 +21,7 @@
     },
     "signwriting-proof-request": {
         "subject": "Signwriting Proof Request for {{registration}}",
-        "body": "Hi Stripmaster Team,\n\nPlease can you provide a signwriting proof for the following vehicle:\n\nRegistration: {{registration}}\nMake & Model: {{makeModel}}\n\nThank you.\n\nDavid"
+        "body": "Hi Stripemaster Team\n\nPlease can you provide a signwriting proof for the following vehicle:\n\nRegistration: {{registration}}\nMake & Model: {{makeModel}}\n\nPlease reply to sara@dpmep.com for proof approval.\n\nThank you.\n\nDavid"
     },
     "default": {
         "subject": "Fleet Update: {{taskName}} for {{registration}}",

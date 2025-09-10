@@ -41,7 +41,7 @@ app.post('/api/send-email', async (req, res) => {
     const { data, error } = await resend.emails.send({
       from: `Fleet Management <${from}>`,
       reply_to: 'd.paradinejr@dpmep.com', // Hardcoded as requested
-      to: to,
+      to: Array.isArray(to) ? to : [to], // Ensure 'to' is always an array
       subject: subject,
       text: body, // Resend uses 'text' for the plain text body
     });

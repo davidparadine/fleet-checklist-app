@@ -2,7 +2,7 @@
     {
         "taskId": "1",
         "phase": "Phase 1: Initial Setup & Ordering",
-        "task": "Add to Fleetcheck Immediately",
+        "task": "Add to Fleetcheck Immediately (copy and paste details from fleetcheck)",
         "status": "Pending",
         "dateActioned": "",
         "requiresEmail": false
@@ -90,7 +90,10 @@
         "dateActioned": "",
         "requiresEmail": true,
         "emailTemplate": "signwriting-proof-request",
-        "emailRecipients": []
+        "emailRecipients": [
+            "office@stripemaster.co.uk",
+            "sara@dpmep.com"
+        ]
     },
     {
         "taskId": "11",
@@ -106,7 +109,8 @@
         "task": "Order First Aid Kit",
         "status": "Pending",
         "dateActioned": "",
-        "requiresEmail": false
+        "requiresEmail": false,
+        "availableStatuses": ["Pending", "Actioned", "Skipped", "Stock"]
     },
     {
         "taskId": "13",
@@ -114,7 +118,8 @@
         "task": "Order One Tyre Gauge",
         "status": "Pending",
         "dateActioned": "",
-        "requiresEmail": false
+        "requiresEmail": false,
+        "availableStatuses": ["Pending", "Actioned", "Skipped", "Stock"]
     },
     {
         "taskId": "14",
@@ -122,7 +127,8 @@
         "task": "Order No Smoking Sign",
         "status": "Pending",
         "dateActioned": "",
-        "requiresEmail": false
+        "requiresEmail": false,
+        "availableStatuses": ["Pending", "Actioned", "Skipped", "Stock"]
     },
     {
         "taskId": "15",
@@ -132,34 +138,6 @@
         "dateActioned": "",
         "requiresEmail": true,
         "emailTemplate": "driver-welcome",
-        "emailRecipients": [
-            "{{driverEmail}}"
-        ]
-    },
-    {
-        "taskId": "16",
-        "phase": "Phase 2: Driver Setup & Communication",
-        "task": "Request DVLA Licence scan (front & back) from driver",
-        "status": "Pending",
-        "dateActioned": "",
-        "requiresEmail": false
-    },
-    {
-        "taskId": "17",
-        "phase": "Phase 2: Driver Setup & Communication",
-        "task": "Prepare Van Agreement",
-        "status": "Pending",
-        "dateActioned": "",
-        "requiresEmail": false
-    },
-    {
-        "taskId": "18",
-        "phase": "Phase 2: Driver Setup & Communication",
-        "task": "Advise driver to consider switching to an EV electricity tariff",
-        "status": "Pending",
-        "dateActioned": "",
-        "requiresEmail": true,
-        "emailTemplate": "ev-advice",
         "emailRecipients": [
             "{{driverEmail}}"
         ]
