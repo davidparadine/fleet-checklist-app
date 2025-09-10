@@ -20,6 +20,9 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 
+// Explicitly handle preflight requests for all routes
+app.options('*', cors(corsOptions));
+
 // A simple health check endpoint to verify the server is running
 app.get('/api/send-email', (req, res) => {
   res.status(200).send('✅ FleetClean Email API is running.');
