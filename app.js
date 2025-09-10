@@ -6,12 +6,10 @@
  */
 
 // === CONFIGURATION ===
-const REPO_OWNER = 'davidparadine';
-const REPO_NAME = 'fleet-checklist-app';
-
 // Dynamically set the API base URL based on the hostname
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const API_BASE_URL = isLocal ? 'http://localhost:3000' : 'https://fleet-checklist-app.vercel.app';
+// For local development, use relative paths. For production, use the full Vercel URL.
+const API_BASE_URL = isLocal ? '' : 'https://fleet-checklist-app.vercel.app';
 
 // === GLOBAL DATA ===
 let header = {
@@ -67,9 +65,7 @@ async function loadTasks() {
         console.error("Could not load tasks:", error);
         // Provide a more detailed alert to the user
         let alertMessage = `Error loading checklist data: ${error.message}\n\n`;
-        alertMessage += 'Please check the following:\n';
-        alertMessage += '1. Is the http-server running in the correct project directory?\n';
-        alertMessage += '2. Is the file named exactly "checklist-data.json"?\n';
+        alertMessage += 'Please ensure the application is running correctly and that the file "checklist-data.json" exists in the project root.';
         alert(alertMessage);
     }
 }
@@ -124,14 +120,9 @@ function setupEventListeners() {
     document.getElementById('tax-status').addEventListener('change', function() { updateHeader('taxStatus', this.value); });
 
     // Attach listeners for action buttons
-    document.getElementById('save-btn').addEventListener('click', saveToGitHub);
-    document.getElementById('load-github-btn').addEventListener('click', showGitHubLoadModal);
     document.getElementById('load-file').addEventListener('change', (event) => loadFromFile(event.target.files[0]));
     document.getElementById('pdf-btn').addEventListener('click', generatePdf);
     document.getElementById('reset-btn').addEventListener('click', resetChecklist);
-
-    // Modal listeners
-    document.querySelector('.close-button').addEventListener('click', () => document.getElementById('github-load-modal').style.display = 'none');
 }
 
 
@@ -425,134 +416,6 @@ async function triggerEmailNotification(task) {
     }
 }
 
-// === SAVE/LOAD FUNCTIONS ===
-
-/**
- * Saves the current progress to a file in the GitHub repository.
- */
-async function saveToGitHub() {
-    const saveBtn = document.getElementById('save-btn');
-    const statusEl = document.getElementById('save-status');
-    saveBtn.disabled = true;
-    saveBtn.textContent = 'Saving...';    
-    showStatus('🔄 Saving progress to GitHub...', 'warning', 0); // Show indefinitely until success/error
-    
-    const progressData = {
-        header,
-        tasks: JSON.parse(JSON.stringify(tasks)),
-        stats: {
-            totalTasks: tasks.length,
-            completed: tasks.filter(t => t.status !== 'Pending').length,
-            progressPercent: (tasks.filter(t => t.status !== 'Pending').length / tasks.length) * 100,
-            savedAt: new Date().toISOString(),
-            savedBy: header.driverName || 'Unknown'
-        }
-    };
-
-    const timestamp = new Date().toISOString().split('T')[0].replace(/-/g, '');
-    // The server will handle adding the 'progress/' directory.
-    const fileName = `vehicle_${header.registration || 'NEW'}_${timestamp}.json`;
-
-    try {
-        const response = await fetch(`${API_BASE_URL}/api/github/save`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ fileName, content: progressData })
-        });
-
-        if (response.ok) {
-            showStatus(`✅ Progress saved! File: <strong>${fileName}</strong>`, 'success');
-            saveToLocalStorage();
-        } else {
-            const errorData = await response.json();
-            throw new Error(errorData.message || `Server responded with status ${response.status}`);
-        }
-    } catch (error) {
-        console.error('Save error:', error);        
-        showStatus(`❌ Save failed: ${error.message}`, 'error');
-    } finally {
-        saveBtn.disabled = false;
-        saveBtn.textContent = '💾 Save Progress to GitHub';
-    }
-}
-
-/**
- * Shows a modal with a list of saved files from the GitHub repository.
- */
-async function showGitHubLoadModal() {
-    const modal = document.getElementById('github-load-modal');
-    const fileListDiv = document.getElementById('github-file-list');
-    modal.style.display = 'block';
-    fileListDiv.innerHTML = '<div class="status warning">🔄 Loading files from GitHub...</div>';
-
-    try {
-        const response = await fetch(`${API_BASE_URL}/api/github/load`);
-
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(`GitHub API Error: ${errorData.message}`);
-        }
-
-        const files = await response.json();
-        fileListDiv.innerHTML = ''; // Clear loading message
-
-        if (files.length === 0) {
-            fileListDiv.innerHTML = '<div class="status info">No saved progress files found.</div>';
-            return;
-        }
-
-        // Sort files by name descending (most recent first)
-        files.sort((a, b) => b.name.localeCompare(a.name));
-
-        files.forEach(file => {
-            if (file.type === 'file' && file.name.endsWith('.json')) {
-                const fileItem = document.createElement('a');
-                fileItem.className = 'github-file-item';
-                fileItem.textContent = file.name;
-                fileItem.href = '#';
-                fileItem.onclick = (e) => {
-                    e.preventDefault();
-                    if (confirm(`Are you sure you want to load progress from ${file.name}? This will overwrite your current unsaved changes.`)) {
-                        loadFromGitHub(file.name);
-                        modal.style.display = 'none';
-                    }
-                };
-                fileListDiv.appendChild(fileItem);
-            }
-        });
-
-    } catch (error) {
-        console.error('Error fetching GitHub files:', error);
-        fileListDiv.innerHTML = `<div class="status error">❌ Failed to load files: ${error.message}</div>`;
-    }
-}
-
-/**
- * Loads progress from a specific file path in the GitHub repository.
- * @param {string} fileName - The name of the file in the progress directory.
- */
-async function loadFromGitHub(fileName) {
-    showStatus('🔄 Loading file from GitHub...', 'warning');
-
-    try {
-        const response = await fetch(`${API_BASE_URL}/api/github/load/${fileName}`);
-
-        if (!response.ok) throw new Error('Failed to fetch file content.');
-
-        const fileData = await response.json();
-        const jsonContent = atob(fileData.content); // Decode base64 content from GitHub API response
-        const data = JSON.parse(jsonContent);
-
-        // Apply the loaded state to the application
-        applyState(data, fileName);
-
-    } catch (error) {
-        showStatus(`❌ Error loading from GitHub: ${error.message}`, 'error');
-    }
-}
-
 /**
  * Loads progress from a user-selected JSON file.
  * @param {File} file - The file to load.
@@ -647,6 +510,9 @@ function resetChecklist() {
  * @param {number} [timeout=5000] - How long to display the message in ms. 0 for indefinite.
  */
 function showStatus(message, type = 'info', timeout = 5000) {
+    // Create status element if it doesn't exist
+    let statusEl = document.getElementById('save-status');
+    if (!statusEl) return; // Or create it dynamically if preferred
     const statusEl = document.getElementById('save-status');
     // Clear any existing timeout to prevent it from clearing a new message prematurely.
     if (statusEl.timeoutId) {

@@ -53,9 +53,6 @@
 
     <!-- Action Buttons -->
     <div style="text-align: center; margin: 30px 0;">
-        <button id="save-btn">💾 Save Progress to GitHub</button>
-        <button id="load-github-btn">☁️ Load from GitHub</button>
-        <br>
         <button id="pdf-btn">📄 Generate PDF Report</button>
         <br>
         <label for="load-file" class="load-file">📁 Load Progress from File (JSON)</label>
@@ -63,21 +60,6 @@
         <br>
         <button id="reset-btn">🔄 Reset Checklist</button>
     </div>
-
-    <!-- Status Messages -->
-    <div id="save-status"></div>
-
-    <!-- Modal for loading from GitHub -->
-    <div id="github-load-modal" class="modal" style="display: none;">
-        <div class="modal-content">
-            <span class="close-button">&times;</span>
-            <h2>Select a File to Load</h2>
-            <div id="github-file-list">
-                <p>Loading files...</p>
-            </div>
-        </div>
-    </div>
-
 
     <script
         src="https://unpkg.com/jspdf@2.5.1/dist/jspdf.umd.min.js"
