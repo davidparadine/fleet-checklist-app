@@ -4,7 +4,8 @@ require('dotenv').config();
 const express = require('express');
 const { Resend } = require('resend');
 const cors = require('cors');
-const path = require('path'); // Import the path module
+const path = require('path');
+const fs = require('fs').promises; // Use promises-based fs for async operations
 
 const app = express();
 
@@ -55,6 +56,32 @@ app.post('/api/send-email', async (req, res) => {
   } catch (e) {
     console.error(e);
     res.status(500).json({ message: 'Internal Server Error' });
+  }
+});
+
+app.post('/api/save-progress', async (req, res) => {
+  const { filename, data } = req.body;
+
+  if (!filename || !data) {
+    return res.status(400).json({ message: 'Missing required fields: filename, data' });
+  }
+
+  try {
+    const progressDir = path.join(__dirname, 'progress_files');
+    // Create the directory if it doesn't exist
+    await fs.mkdir(progressDir, { recursive: true });
+
+    const filePath = path.join(progressDir, filename);
+    // Sanitize filename to prevent path traversal attacks
+    if (path.dirname(filePath) !== progressDir) {
+      return res.status(400).json({ message: 'Invalid filename.' });
+    }
+
+    await fs.writeFile(filePath, JSON.stringify(data, null, 2));
+    res.status(200).json({ message: `Progress saved successfully to ${filename}` });
+  } catch (error) {
+    console.error('Error saving progress file:', error);
+    res.status(500).json({ message: 'Internal Server Error while saving file.' });
   }
 });
 

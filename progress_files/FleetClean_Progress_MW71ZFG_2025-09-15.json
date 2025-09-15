@@ -1,9 +1,11 @@
 {
   "header": {
-    "registration": "DP9999",
-    "makeModel": "Peugeot Partner Van",
+    "registration": "MW71ZFG",
+    "makeModel": "Peugeot Expert Prof Premium L1 B",
+    "sellerEmail": "stuart.forrest@regal-motors.co.uk",
     "driverName": "David Paradine",
     "driverEmail": "d.paradinejr@gmail.com",
+    "driverStartDate": "2025-10-06",
     "location": "Office",
     "taxStatus": "None Personal Use"
   },
@@ -11,9 +13,9 @@
     {
       "taskId": "1",
       "phase": "Phase 1: Initial Setup & Ordering",
-      "task": "Add to Fleetcheck Immediately",
+      "task": "Add to Fleetcheck Immediately (copy and paste details from fleetcheck)",
       "status": "Actioned",
-      "dateActioned": "2025-09-09",
+      "dateActioned": "2025-09-10",
       "requiresEmail": false
     },
     {
@@ -21,7 +23,7 @@
       "phase": "Phase 1: Initial Setup & Ordering",
       "task": "Add Registration to MID Portal",
       "status": "Actioned",
-      "dateActioned": "2025-09-09",
+      "dateActioned": "2025-09-10",
       "requiresEmail": false
     },
     {
@@ -33,23 +35,24 @@
       "requiresEmail": true,
       "emailTemplate": "insurance-notification",
       "emailRecipients": [
-        "insurance@yourfleet.com"
+        "d.paradinejr@dpmep.com",
+        "matt@genesisinsuranceservices.co.uk"
       ]
     },
     {
       "taskId": "4",
       "phase": "Phase 1: Initial Setup & Ordering",
       "task": "Add Registration to M6 Toll ANPR account",
-      "status": "Pending",
-      "dateActioned": "",
+      "status": "Actioned",
+      "dateActioned": "2025-09-10",
       "requiresEmail": false
     },
     {
       "taskId": "5",
       "phase": "Phase 1: Initial Setup & Ordering",
       "task": "Add vehicle to Clean Air Zone (CAZ) portal & confirm status",
-      "status": "Pending",
-      "dateActioned": "",
+      "status": "Actioned",
+      "dateActioned": "2025-09-10",
       "requiresEmail": false,
       "customInput": {
         "type": "select",
@@ -64,23 +67,23 @@
     {
       "taskId": "6",
       "phase": "Phase 1: Initial Setup & Ordering",
-      "task": "Order Fuel Card",
-      "status": "Pending",
-      "dateActioned": "",
+      "task": "Order Fuel Card and Issue Pin",
+      "status": "Actioned",
+      "dateActioned": "2025-09-10",
       "requiresEmail": false
     },
     {
       "taskId": "7",
       "phase": "Phase 1: Initial Setup & Ordering",
       "task": "Order RAC Cover",
-      "status": "Pending",
-      "dateActioned": "",
+      "status": "Skipped",
+      "dateActioned": "2025-09-10",
       "requiresEmail": false
     },
     {
       "taskId": "8",
       "phase": "Phase 1: Initial Setup & Ordering",
-      "task": "Order Seat Covers",
+      "task": "Order Home Charger",
       "status": "Pending",
       "dateActioned": "",
       "requiresEmail": false
@@ -88,23 +91,28 @@
     {
       "taskId": "9",
       "phase": "Phase 1: Initial Setup & Ordering",
-      "task": "Order Home Charger",
+      "task": "Send Details to Stripmaster",
       "status": "Skipped",
       "dateActioned": "2025-09-09",
-      "requiresEmail": false
+      "requiresEmail": true,
+      "emailTemplate": "signwriting-proof-request",
+      "emailRecipients": [
+        "office@stripemaster.co.uk",
+        "sara@dpmep.com"
+      ]
     },
     {
       "taskId": "10",
       "phase": "Phase 1: Initial Setup & Ordering",
-      "task": "Send Details to Stripmaster",
-      "status": "Pending",
-      "dateActioned": "",
+      "task": "Order Mats",
+      "status": "Actioned",
+      "dateActioned": "2025-09-10",
       "requiresEmail": false
     },
     {
       "taskId": "11",
       "phase": "Phase 1: Initial Setup & Ordering",
-      "task": "Order Mats",
+      "task": "Order Seat Covers",
       "status": "Pending",
       "dateActioned": "",
       "requiresEmail": false
@@ -113,28 +121,58 @@
       "taskId": "12",
       "phase": "Phase 1: Initial Setup & Ordering",
       "task": "Order First Aid Kit",
-      "status": "Pending",
-      "dateActioned": "",
-      "requiresEmail": false
+      "status": "Actioned",
+      "dateActioned": "2025-09-10",
+      "requiresEmail": false,
+      "availableStatuses": [
+        "Pending",
+        "Actioned",
+        "Skipped",
+        "Stock"
+      ]
     },
     {
       "taskId": "13",
       "phase": "Phase 1: Initial Setup & Ordering",
       "task": "Order One Tyre Gauge",
-      "status": "Pending",
-      "dateActioned": "",
-      "requiresEmail": false
+      "status": "Stock",
+      "dateActioned": "2025-09-10",
+      "requiresEmail": false,
+      "availableStatuses": [
+        "Pending",
+        "Actioned",
+        "Skipped",
+        "Stock"
+      ]
     },
     {
       "taskId": "14",
       "phase": "Phase 1: Initial Setup & Ordering",
       "task": "Order No Smoking Sign",
-      "status": "Pending",
-      "dateActioned": "",
-      "requiresEmail": false
+      "status": "Stock",
+      "dateActioned": "2025-09-10",
+      "requiresEmail": false,
+      "availableStatuses": [
+        "Pending",
+        "Actioned",
+        "Skipped",
+        "Stock"
+      ]
     },
     {
       "taskId": "15",
+      "phase": "Phase 2: Dealership Coordination",
+      "task": "Email seller to confirm coordination tasks",
+      "status": "Actioned",
+      "dateActioned": "2025-09-15",
+      "requiresEmail": true,
+      "emailTemplate": "dealership-coordination-request",
+      "emailRecipients": [
+        "{{sellerEmail}}"
+      ]
+    },
+    {
+      "taskId": "16",
       "phase": "Phase 2: Driver Setup & Communication",
       "task": "Send standard introductory email template to the driver",
       "status": "Pending",
@@ -146,52 +184,24 @@
       ]
     },
     {
-      "taskId": "16",
-      "phase": "Phase 2: Driver Setup & Communication",
-      "task": "Request DVLA Licence scan (front & back) from driver",
-      "status": "Pending",
-      "dateActioned": "",
-      "requiresEmail": false
-    },
-    {
       "taskId": "17",
-      "phase": "Phase 2: Driver Setup & Communication",
-      "task": "Prepare Van Agreement",
-      "status": "Pending",
-      "dateActioned": "",
-      "requiresEmail": false
-    },
-    {
-      "taskId": "18",
-      "phase": "Phase 2: Driver Setup & Communication",
-      "task": "Advise driver to consider switching to an EV electricity tariff",
-      "status": "Pending",
-      "dateActioned": "",
-      "requiresEmail": true,
-      "emailTemplate": "ev-advice",
-      "emailRecipients": [
-        "{{driverEmail}}"
-      ]
-    },
-    {
-      "taskId": "19",
-      "phase": "Phase 2: Driver Setup & Communication",
+      "phase": "Phase 3: Driver Setup & Communication",
       "task": "Set up driver as a Fleetcheck User",
       "status": "Pending",
       "dateActioned": "",
       "requiresEmail": false
     },
     {
-      "taskId": "20",
-      "phase": "Phase 2: Driver Setup & Communication",
+      "taskId": "18",
+      "phase": "Phase 3: Driver Setup & Communication",
       "task": "Set up Fleetcheck Mandate for driver checks",
       "status": "Pending",
       "dateActioned": "",
       "requiresEmail": false
     },
     {
-      "taskId": "21",
-      "phase": "Phase 2: Driver Setup & Communication",
+      "taskId": "19",
+      "phase": "Phase 3: Driver Setup & Communication",
       "task": "Send P11D guidance information",
       "status": "Pending",
       "dateActioned": "",
@@ -202,97 +212,9 @@
       ]
     },
     {
-      "taskId": "22",
-      "phase": "Phase 3: Dealership Coordination",
-      "task": "Confirm Status/ETA for Dash Cam Installation",
-      "status": "Pending",
-      "dateActioned": "",
-      "requiresEmail": false
-    },
-    {
-      "taskId": "23",
-      "phase": "Phase 3: Dealership Coordination",
-      "task": "Confirm Status/ETA for Dead Locks Installation",
-      "status": "Pending",
-      "dateActioned": "",
-      "requiresEmail": false
-    },
-    {
-      "taskId": "24",
-      "phase": "Phase 3: Dealership Coordination",
-      "task": "Confirm Status/ETA for Plywood Lining Installation",
-      "status": "Pending",
-      "dateActioned": "",
-      "requiresEmail": false
-    },
-    {
-      "taskId": "25",
-      "phase": "Phase 3: Dealership Coordination",
-      "task": "Confirm Status/ETA for MOT",
-      "status": "Pending",
-      "dateActioned": "",
-      "requiresEmail": false
-    },
-    {
-      "taskId": "26",
-      "phase": "Phase 3: Dealership Coordination",
-      "task": "Confirm Status/ETA for Vehicle Tax Activation",
-      "status": "Pending",
-      "dateActioned": "",
-      "requiresEmail": false
-    },
-    {
-      "taskId": "27",
-      "phase": "Phase 3: Dealership Coordination",
-      "task": "Confirm Final Delivery Date",
-      "status": "Pending",
-      "dateActioned": "",
-      "requiresEmail": false
-    },
-    {
-      "taskId": "28",
-      "phase": "Phase 3: Dealership Coordination",
-      "task": "Request Last Service Date and Mileage",
-      "status": "Pending",
-      "dateActioned": "",
-      "requiresEmail": false
-    },
-    {
-      "taskId": "29",
-      "phase": "Phase 3: Dealership Coordination",
-      "task": "Request Engine Oil Specification",
-      "status": "Pending",
-      "dateActioned": "",
-      "requiresEmail": false
-    },
-    {
-      "taskId": "30",
-      "phase": "Phase 3: Dealership Coordination",
-      "task": "Request Euro Rating",
-      "status": "Pending",
-      "dateActioned": "",
-      "requiresEmail": false
-    },
-    {
-      "taskId": "31",
-      "phase": "Phase 3: Dealership Coordination",
-      "task": "Request Service Interval and Duration",
-      "status": "Pending",
-      "dateActioned": "",
-      "requiresEmail": false
-    },
-    {
       "taskId": "32",
       "phase": "Phase 4: Vehicle Preparation & Delivery",
-      "task": "Verify Vehicle Tax is active",
-      "status": "Pending",
-      "dateActioned": "",
-      "requiresEmail": false
-    },
-    {
-      "taskId": "33",
-      "phase": "Phase 4: Vehicle Preparation & Delivery",
-      "task": "Verify Vehicle MOT is active",
+      "task": "Verify Vehicle Tax and MOT are active (check at https://vehicleenquiry.service.gov.uk/)",
       "status": "Pending",
       "dateActioned": "",
       "requiresEmail": false
@@ -368,18 +290,6 @@
       "status": "Pending",
       "dateActioned": "",
       "requiresEmail": false
-    },
-    {
-      "taskId": "43",
-      "phase": "Phase 5: End-User Handover",
-      "task": "Confirm to driver CAZ status",
-      "status": "Pending",
-      "dateActioned": "",
-      "requiresEmail": true,
-      "emailTemplate": "caz-status",
-      "emailRecipients": [
-        "{{driverEmail}}"
-      ]
     },
     {
       "taskId": "44",
@@ -565,12 +475,5 @@
       "dateActioned": "",
       "requiresEmail": false
     }
-  ],
-  "stats": {
-    "totalTasks": 66,
-    "completed": 4,
-    "progressPercent": 6.0606060606060606,
-    "savedAt": "2025-09-09T20:11:03.649Z",
-    "savedBy": "David Paradine"
-  }
+  ]
 }

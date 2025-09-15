@@ -24,6 +24,7 @@ let header = {
 let tasks = [];
 let phaseGroups = {};
 let emailTemplates = {};
+let isBusy = false; // Flag to track if an async operation is in progress
 
 // === INITIALIZATION ===
 
@@ -125,7 +126,7 @@ function setupEventListeners() {
     // Attach listeners for action buttons
     document.getElementById('load-file-btn').addEventListener('click', () => document.getElementById('load-file').click());
     document.getElementById('load-file').addEventListener('change', (event) => loadFromFile(event.target.files[0]));
-    document.getElementById('save-file-btn').addEventListener('click', saveToFile);
+    document.getElementById('save-server-btn').addEventListener('click', saveToServer);
     document.getElementById('pdf-btn').addEventListener('click', generatePdf);
     document.getElementById('reset-btn').addEventListener('click', resetChecklist);
 }
@@ -242,11 +243,11 @@ function createTaskElement(task, index) {
 
     const dateInput = taskDiv.querySelector(`#date-${index}`);
 
-    statusSelect.addEventListener('change', async () => {
-        await updateTask(index, statusSelect.value, dateInput.value);
-    });
+    const handleUpdate = async () => {
+        await updateTask(index, statusSelect.value);
+    };
 
-    dateInput.addEventListener('change', async () => await updateTask(index, statusSelect.value, dateInput.value));
+    statusSelect.addEventListener('change', handleUpdate);
 
     // Add click listener for the expander
     const expander = taskDiv.querySelector('.expander');
@@ -276,7 +277,9 @@ function createTaskElement(task, index) {
  * @param {string} status - The new status.
  * @param {string} dateActioned - The new date actioned.
  */
-async function updateTask(index, status, dateActioned = '') {
+async function updateTask(index, status) {
+    setBusy(true); // Set the application to a busy state
+
     const task = tasks[index];
     if (task) {
         const previousStatus = task.status;
@@ -301,6 +304,8 @@ async function updateTask(index, status, dateActioned = '') {
         saveToLocalStorage();
         updateProgress();
     }
+
+    setBusy(false); // Operation is complete, release the busy state
 }
 
 /**
@@ -454,28 +459,36 @@ async function triggerEmailNotification(task) {
 }
 
 /**
- * Saves the current checklist state to a JSON file and triggers a download.
+ * Saves the current checklist state to a file on the server.
  */
-function saveToFile() {
+async function saveToServer() {
     try {
         const dataToSave = {
             header,
             tasks: structuredClone(tasks)
         };
-        const dataStr = JSON.stringify(dataToSave, null, 2); // Pretty-print the JSON
-        const blob = new Blob([dataStr], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
+        const filename = `FleetClean_Progress_${header.registration || 'NEW'}_${new Date().toISOString().split('T')[0]}.json`;
 
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `FleetClean_Progress_${header.registration || 'NEW'}_${new Date().toISOString().split('T')[0]}.json`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-        showStatus('✅ Progress saved to file!', 'success');
+        showStatus('☁️ Saving progress to server...', 'warning', 0);
+
+        const response = await fetch(`${API_BASE_URL}/api/save-progress`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ filename, data: dataToSave }),
+        });
+
+        if (!response.ok) {
+            const errorResult = await response.json().catch(() => ({ message: 'Failed to save to server. An unknown error occurred.' }));
+            throw new Error(errorResult.message);
+        }
+
+        showStatus(`✅ Progress saved to server in <strong>progress_files/${filename}</strong>`, 'success');
+
     } catch (error) {
-        showStatus(`❌ Failed to save file: ${error.message}`, 'error');
+        console.error('Server save error:', error);
+        showStatus(`❌ Failed to save to server: ${error.message}`, 'error');
     }
 }
 
@@ -484,6 +497,11 @@ function saveToFile() {
  * @param {File} file - The file to load.
  */
 function loadFromFile(file) {
+    if (isBusy) {
+        showStatus('Please wait for the current operation to finish before loading a file.', 'warning');
+        return;
+    }
+
     if (!file) return;
     
     const reader = new FileReader();
@@ -579,6 +597,20 @@ function showStatus(message, type = 'info', timeout = 5000) {
         statusEl.timeoutId = setTimeout(() => { statusEl.innerHTML = ''; }, timeout);
     }
 }
+
+/**
+ * Sets the busy state of the application and updates the UI accordingly.
+ * @param {boolean} busy - True if the app is busy, false otherwise.
+ */
+function setBusy(busy) {
+    isBusy = busy;
+    const saveButton = document.getElementById('save-server-btn');
+    if (saveButton) {
+        saveButton.disabled = isBusy;
+        saveButton.textContent = isBusy ? '⏳ Please Wait...' : '☁️ Save Progress to Server';
+    }
+}
+
 
 /**
  * Generates a PDF report of the current checklist state.

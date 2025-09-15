@@ -23,6 +23,10 @@
         "subject": "Signwriting Proof Request for {{registration}}",
         "body": "Hi Stripemaster Team\n\nPlease can you provide a signwriting proof for the following vehicle:\n\nRegistration: {{registration}}\nMake & Model: {{makeModel}}\n\nPlease reply to sara@dpmep.com for proof approval.\n\nThank you.\n\nDavid"
     },
+    "dealership-coordination-request": {
+        "subject": "Coordination Request for Vehicle {{registration}}",
+        "body": "Hi,\n\nFollowing our recent purchase of the vehicle with registration {{registration}} ({{makeModel}}), we are writing to coordinate a few outstanding items.\n\nCould you please provide an update or the requested information for the list below?\n\n- Status/ETA for Dash Cam Installation\n- Status/ETA for Dead Locks Installation\n- Status/ETA for Plywood Lining Installation\n- Status/ETA for MOT\n- Status/ETA for Vehicle Tax Activation\n- Final Delivery Date\n- Last Service Date and Mileage\n- Engine Oil Specification\n- Euro Rating\n- Service Interval and Duration\n\nThank you.\n\nFleet Management"
+    },
     "default": {
         "subject": "Fleet Update: {{taskName}} for {{registration}}",
         "body": "This is a notification that the following task has been completed for vehicle {{registration}}:\n\nTask: {{taskName}}\n\nThank you."

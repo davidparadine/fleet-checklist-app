@@ -69,21 +69,13 @@
     {
         "taskId": "8",
         "phase": "Phase 1: Initial Setup & Ordering",
-        "task": "Order Seat Covers",
-        "status": "Pending",
-        "dateActioned": "",
-        "requiresEmail": false
-    },
-    {
-        "taskId": "9",
-        "phase": "Phase 1: Initial Setup & Ordering",
         "task": "Order Home Charger",
         "status": "Pending",
         "dateActioned": "",
         "requiresEmail": false
     },
     {
-        "taskId": "10",
+        "taskId": "9",
         "phase": "Phase 1: Initial Setup & Ordering",
         "task": "Send Details to Stripmaster",
         "status": "Pending",
@@ -96,9 +88,17 @@
         ]
     },
     {
-        "taskId": "11",
+        "taskId": "10",
         "phase": "Phase 1: Initial Setup & Ordering",
         "task": "Order Mats",
+        "status": "Pending",
+        "dateActioned": "",
+        "requiresEmail": false
+    },
+    {
+        "taskId": "11",
+        "phase": "Phase 1: Initial Setup & Ordering",
+        "task": "Order Seat Covers",
         "status": "Pending",
         "dateActioned": "",
         "requiresEmail": false
@@ -132,6 +132,18 @@
     },
     {
         "taskId": "15",
+        "phase": "Phase 2: Dealership Coordination",
+        "task": "Email seller to confirm coordination tasks",
+        "status": "Pending",
+        "dateActioned": "",
+        "requiresEmail": true,
+        "emailTemplate": "dealership-coordination-request",
+        "emailRecipients": [
+            "{{sellerEmail}}"
+        ]
+    },
+    {
+        "taskId": "16",
         "phase": "Phase 2: Driver Setup & Communication",
         "task": "Send standard introductory email template to the driver",
         "status": "Pending",
@@ -143,24 +155,24 @@
         ]
     },
     {
-        "taskId": "19",
-        "phase": "Phase 2: Driver Setup & Communication",
+        "taskId": "17",
+        "phase": "Phase 3: Driver Setup & Communication",
         "task": "Set up driver as a Fleetcheck User",
         "status": "Pending",
         "dateActioned": "",
         "requiresEmail": false
     },
     {
-        "taskId": "20",
-        "phase": "Phase 2: Driver Setup & Communication",
+        "taskId": "18",
+        "phase": "Phase 3: Driver Setup & Communication",
         "task": "Set up Fleetcheck Mandate for driver checks",
         "status": "Pending",
         "dateActioned": "",
         "requiresEmail": false
     },
     {
-        "taskId": "21",
-        "phase": "Phase 2: Driver Setup & Communication",
+        "taskId": "19",
+        "phase": "Phase 3: Driver Setup & Communication",
         "task": "Send P11D guidance information",
         "status": "Pending",
         "dateActioned": "",
@@ -168,18 +180,6 @@
         "emailTemplate": "p11d-info",
         "emailRecipients": [
             "{{driverEmail}}"
-        ]
-    },
-    {
-        "taskId": "22",
-        "phase": "Phase 3: Dealership Coordination",
-        "task": "Email seller to confirm coordination tasks",
-        "status": "Pending",
-        "dateActioned": "",
-        "requiresEmail": true,
-        "emailTemplate": "dealership-coordination-request",
-        "emailRecipients": [
-            "{{sellerEmail}}"
         ]
     },
     {
@@ -261,18 +261,6 @@
         "status": "Pending",
         "dateActioned": "",
         "requiresEmail": false
-    },
-    {
-        "taskId": "43",
-        "phase": "Phase 5: End-User Handover",
-        "task": "Confirm to driver CAZ status",
-        "status": "Pending",
-        "dateActioned": "",
-        "requiresEmail": true,
-        "emailTemplate": "caz-status",
-        "emailRecipients": [
-            "{{driverEmail}}"
-        ]
     },
     {
         "taskId": "44",
