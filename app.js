@@ -6,25 +6,16 @@
  */
 
 // === CONFIGURATION ===
-// The API base URL. For a local setup where the server serves the frontend,
-// a relative path (empty string) is sufficient.
-const API_BASE_URL = '';
+const API_BASE_URL = ''; // Use a relative path for the API
+const LOCAL_STORAGE_KEY = 'fleetChecklists';
 
 // === GLOBAL DATA ===
-let header = {
-    registration: '',
-    makeModel: '',
-    sellerEmail: '',
-    driverName: '',
-    driverEmail: '',
-    driverStartDate: '',
-    location: 'Office',
-    taxStatus: 'None Personal Use'
-};
-let tasks = [];
+let activeChecklistId = null; // The registration of the currently active checklist
+let checklists = {}; // Holds all checklist data, keyed by registration
+let tasks = []; // Template tasks loaded from checklist-data.json
 let phaseGroups = {};
 let emailTemplates = {};
-let isBusy = false; // Flag to track if an async operation is in progress
+let isBusy = false;
 
 // === INITIALIZATION ===
 
@@ -37,18 +28,23 @@ window.onload = async function() {
 };
 
 /**
- * Initializes the checklist by loading tasks, restoring progress, and rendering the form.
+ * Initializes the checklist system.
  */
 async function initChecklist() {
-    await Promise.all([
-        loadTasks(),
-        loadEmailTemplates()
-    ]);
+    await Promise.all([loadTasks(), loadEmailTemplates()]);
     groupTasksByPhase();
     restoreFromLocalStorage();
-    renderForm();
-    updateHeaderFields();
-    updateProgress();
+
+    // If no checklists are loaded, create a default one
+    if (Object.keys(checklists).length === 0) {
+        createNewChecklist('NEW_VEHICLE_1');
+    } else {
+        // Otherwise, set the first checklist as active
+        activeChecklistId = Object.keys(checklists)[0];
+    }
+
+    populateChecklistSelector();
+    renderActiveChecklist();
 }
 
 /**
@@ -103,29 +99,50 @@ function groupTasksByPhase() {
 }
 
 /**
- * Restores the checklist progress from the browser's localStorage.
+ * Restores all checklists from the browser's localStorage.
  */
 function restoreFromLocalStorage() {
-    const saved = localStorage.getItem('checklistProgress');
-    if (saved) applyState(JSON.parse(saved), 'local');
+    const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
+    if (saved) {
+        checklists = JSON.parse(saved);
+    }
 }
 
 /**
- * Sets up event listeners for the header input fields.
+ * Saves the entire checklists object to localStorage.
+ */
+function saveToLocalStorage() {
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(checklists));
+}
+
+
+/**
+ * Sets up event listeners for all interactive elements.
  */
 function setupEventListeners() {
-    document.getElementById('registration').addEventListener('change', function() { updateHeader('registration', this.value.toUpperCase()); });
-    document.getElementById('make-model').addEventListener('change', function() { updateHeader('makeModel', this.value); });
-    document.getElementById('seller-email').addEventListener('change', function() { updateHeader('sellerEmail', this.value); });
-    document.getElementById('driver-name').addEventListener('change', function() { updateHeader('driverName', this.value); });
-    document.getElementById('driver-email').addEventListener('change', function() { updateHeader('driverEmail', this.value); });
-    document.getElementById('driver-start-date').addEventListener('change', function() { updateHeader('driverStartDate', this.value); });
-    document.getElementById('location').addEventListener('change', function() { updateHeader('location', this.value); });
-    document.getElementById('tax-status').addEventListener('change', function() { updateHeader('taxStatus', this.value); });
+    // Checklist management
+    document.getElementById('checklist-select').addEventListener('change', (e) => {
+        switchChecklist(e.target.value);
+    });
+    document.getElementById('new-checklist-btn').addEventListener('click', () => {
+        const reg = prompt('Enter new vehicle registration:');
+        if (reg) createNewChecklist(reg.toUpperCase());
+    });
+    document.getElementById('delete-checklist-btn').addEventListener('click', deleteActiveChecklist);
 
-    // Attach listeners for action buttons
+    // Header fields
+    document.getElementById('registration').addEventListener('change', (e) => handleRegistrationChange(e.target.value));
+    document.getElementById('make-model').addEventListener('change', (e) => updateHeader('makeModel', e.target.value));
+    document.getElementById('seller-email').addEventListener('change', (e) => updateHeader('sellerEmail', e.target.value));
+    document.getElementById('driver-name').addEventListener('change', (e) => updateHeader('driverName', e.target.value));
+    document.getElementById('driver-email').addEventListener('change', (e) => updateHeader('driverEmail', e.target.value));
+    document.getElementById('driver-start-date').addEventListener('change', (e) => updateHeader('driverStartDate', e.target.value));
+    document.getElementById('location').addEventListener('change', (e) => updateHeader('location', e.target.value));
+    document.getElementById('tax-status').addEventListener('change', (e) => updateHeader('taxStatus', e.target.value));
+
+    // Action buttons
     document.getElementById('load-file-btn').addEventListener('click', () => document.getElementById('load-file').click());
-    document.getElementById('load-file').addEventListener('change', (event) => loadFromFile(event.target.files[0]));
+    document.getElementById('load-file').addEventListener('change', (e) => loadFromFile(e.target.files[0]));
     document.getElementById('save-server-btn').addEventListener('click', saveToServer);
     document.getElementById('pdf-btn').addEventListener('click', generatePdf);
     document.getElementById('reset-btn').addEventListener('click', resetChecklist);
@@ -149,15 +166,20 @@ function linkify(text) {
 // === FORM RENDERING ===
 
 /**
- * Renders the entire checklist form.
+ * Renders the form for the currently active checklist.
  */
-function renderForm() {
+function renderActiveChecklist() {
+    if (!activeChecklistId || !checklists[activeChecklistId]) {
+        console.error("No active checklist to render.");
+        return;
+    }
+
     const form = document.getElementById('checklist-form');
-    form.innerHTML = '';
+    form.innerHTML = ''; // Clear previous content
 
     Object.keys(phaseGroups).forEach(phase => {
         const phaseDiv = document.createElement('div');
-        phaseDiv.className = 'phase collapsed'; // Start as collapsed
+        phaseDiv.className = 'phase collapsed';
 
         const phaseHeader = document.createElement('h3');
         phaseHeader.className = 'phase-header';
@@ -165,7 +187,7 @@ function renderForm() {
         
         const taskContainer = document.createElement('div');
         taskContainer.className = 'phase-tasks';
-        taskContainer.style.display = 'none'; // Start hidden
+        taskContainer.style.display = 'none';
 
         phaseHeader.addEventListener('click', () => {
             phaseDiv.classList.toggle('collapsed');
@@ -173,15 +195,24 @@ function renderForm() {
         });
 
         phaseDiv.appendChild(phaseHeader);
-        phaseGroups[phase].forEach(task => {
-            const globalIndex = tasks.indexOf(task);
-            const taskDiv = createTaskElement(task, globalIndex);
-            taskContainer.appendChild(taskDiv);
+
+        // Use the tasks from the active checklist
+        const checklistTasks = checklists[activeChecklistId].tasks;
+        phaseGroups[phase].forEach(templateTask => {
+            // Find the corresponding task in the active checklist
+            const task = checklistTasks.find(t => t.taskId === templateTask.taskId);
+            if (task) {
+                const taskDiv = createTaskElement(task, checklistTasks.indexOf(task));
+                taskContainer.appendChild(taskDiv);
+            }
         });
         
         phaseDiv.appendChild(taskContainer);
         form.appendChild(phaseDiv);
     });
+
+    updateHeaderFields();
+    updateProgress();
 }
 
 /**
@@ -261,7 +292,8 @@ function createTaskElement(task, index) {
     if (task.customInput && task.customInput.type === 'select') {
         const customSelect = taskDiv.querySelector(`#${task.customInput.id}-${index}`);
         customSelect.addEventListener('change', () => {
-            task.customValue = customSelect.value;
+            // Ensure we're modifying the task in the active checklist
+            checklists[activeChecklistId].tasks[index].customValue = customSelect.value;
             saveToLocalStorage();
         });
     }
@@ -272,96 +304,97 @@ function createTaskElement(task, index) {
 // === STATE MANAGEMENT ===
 
 /**
- * Updates a task's data and saves it to localStorage.
- * @param {number} index - The index of the task to update.
+ * Updates a task in the active checklist.
+ * @param {number} taskIndex - The index of the task in the checklist's task array.
  * @param {string} status - The new status.
- * @param {string} dateActioned - The new date actioned.
  */
-async function updateTask(index, status) {
-    setBusy(true); // Set the application to a busy state
-
-    const task = tasks[index];
-    if (task) {
+async function updateTask(taskIndex, status) {
+    setBusy(true);
+    const checklist = checklists[activeChecklistId];
+    if (checklist && checklist.tasks[taskIndex]) {
+        const task = checklist.tasks[taskIndex];
         const previousStatus = task.status;
         task.status = status;
 
-        // As requested, if status changes from Pending, always set the date to today.
         if (previousStatus === 'Pending' && status !== 'Pending') {
             task.dateActioned = new Date().toISOString().split('T')[0];
+            document.getElementById(`date-${taskIndex}`).value = task.dateActioned;
         }
 
-        // If task is actioned and requires an email, trigger it.
         if (previousStatus === 'Pending' && status === 'Actioned' && task.requiresEmail) {
             await triggerEmailNotification(task);
         }
-
-        // Update the date input field in the UI to reflect the new state
-        const dateInput = document.getElementById(`date-${index}`);
-        if (dateInput) {
-            dateInput.value = tasks[index].dateActioned;
-        }
         
         saveToLocalStorage();
-        updateProgress();
+        updateProgress(); // This will re-render progress based on the active checklist
     }
-
-    setBusy(false); // Operation is complete, release the busy state
+    setBusy(false);
 }
 
 /**
- * Updates a header field and saves it to localStorage.
- * @param {string} key - The key of the header field to update.
+ * Updates a header field in the active checklist.
+ * @param {string} key - The header field key.
  * @param {string} value - The new value.
  */
 function updateHeader(key, value) {
-    header[key] = value;
-    saveToLocalStorage();
-}
-
-/**
- * Saves the current state of the checklist to localStorage.
- */
-function saveToLocalStorage() {
-    const dataToSave = { 
-        header, 
-        tasks: structuredClone(tasks) // Deep copy to avoid reference issues
-    };
-    localStorage.setItem('checklistProgress', JSON.stringify(dataToSave));
+    if (checklists[activeChecklistId]) {
+        checklists[activeChecklistId].header[key] = value;
+        saveToLocalStorage();
+    }
 }
 
 // === UI UPDATES ===
 
 /**
- * Updates the overall and phase-specific progress displays.
+ * Populates the checklist selector dropdown.
+ */
+function populateChecklistSelector() {
+    const select = document.getElementById('checklist-select');
+    select.innerHTML = '';
+    Object.keys(checklists).forEach(reg => {
+        const option = document.createElement('option');
+        option.value = reg;
+        option.textContent = reg;
+        select.appendChild(option);
+    });
+    select.value = activeChecklistId;
+}
+
+
+/**
+ * Updates the progress displays for the active checklist.
  */
 function updateProgress() {
-    const totalTasks = tasks.length;
-    const completedTasks = tasks.filter(t => t.status !== 'Pending').length;
+    const checklist = checklists[activeChecklistId];
+    if (!checklist) return;
+
+    const totalTasks = checklist.tasks.length;
+    const completedTasks = checklist.tasks.filter(t => t.status !== 'Pending').length;
     const percent = totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
-    
-    // Update overall progress bar
-    document.getElementById('progress-fill').style.width = percent + '%';
+
+    document.getElementById('progress-fill').style.width = `${percent}%`;
     document.getElementById('progress-text').textContent = `${completedTasks}/${totalTasks} tasks completed (${percent.toFixed(1)}%)`;
-    
-    // Update phase progress summary
+
     const phaseProgresses = document.getElementById('phase-progresses');
     phaseProgresses.innerHTML = '';
-    
     Object.keys(phaseGroups).forEach(phase => {
-        const phaseTasks = phaseGroups[phase];
-        const phaseCompleted = phaseTasks.filter(t => t.status !== 'Pending').length;
-        const phasePercent = phaseTasks.length > 0 ? (phaseCompleted / phaseTasks.length) * 100 : 0;
+        const phaseTemplateTasks = phaseGroups[phase];
+        const phaseChecklistTasks = checklist.tasks.filter(t => phaseTemplateTasks.some(pt => pt.taskId === t.taskId));
+        const completedInPhase = phaseChecklistTasks.filter(t => t.status !== 'Pending').length;
+        const phasePercent = phaseChecklistTasks.length > 0 ? (completedInPhase / phaseChecklistTasks.length) * 100 : 0;
+
         const phaseDiv = document.createElement('div');
         phaseDiv.className = 'phase-progress';
-        phaseDiv.innerHTML = `<strong>${phase}:</strong> ${phaseCompleted}/${phaseTasks.length} (${phasePercent.toFixed(1)}%)`;
+        phaseDiv.innerHTML = `<strong>${phase}:</strong> ${completedInPhase}/${phaseChecklistTasks.length} (${phasePercent.toFixed(1)}%)`;
         phaseProgresses.appendChild(phaseDiv);
     });
 }
 
 /**
- * Updates the header input fields from the global header object.
+ * Updates the header input fields from the active checklist's header data.
  */
 function updateHeaderFields() {
+    const header = checklists[activeChecklistId].header;
     document.getElementById('registration').value = header.registration;
     document.getElementById('make-model').value = header.makeModel;
     document.getElementById('seller-email').value = header.sellerEmail || '';
@@ -394,16 +427,17 @@ function getStatusColor(status) {
  */
 function getEmailContent(templateName, task) {
     const template = emailTemplates[templateName] || emailTemplates['default'] || { subject: '', body: '' };
+    const activeHeader = checklists[activeChecklistId].header;
 
     let subject = template.subject;
     let body = template.body;
 
     // Replace placeholders
     const replacements = {
-        '{{registration}}': header.registration || '[Vehicle Registration]',
-        '{{makeModel}}': header.makeModel || '[Make/Model]',
-        '{{sellerEmail}}': header.sellerEmail || '[Seller Email]',
-        '{{driverName}}': header.driverName || '[Driver Name]',
+        '{{registration}}': activeHeader.registration || '[Vehicle Registration]',
+        '{{makeModel}}': activeHeader.makeModel || '[Make/Model]',
+        '{{sellerEmail}}': activeHeader.sellerEmail || '[Seller Email]',
+        '{{driverName}}': activeHeader.driverName || '[Driver Name]',
         '{{taskName}}': task.task || '[Task Name]'
     };
 
@@ -420,14 +454,14 @@ function getEmailContent(templateName, task) {
  * @param {object} task - The task that requires an email.
  */
 async function triggerEmailNotification(task) {
-    // Hardcoded from and to addresses as requested.
-    const from = 'fleet@paradine.org.uk'; // This can be configured in Resend
+    const from = 'fleet@paradine.org.uk';
+    const activeHeader = checklists[activeChecklistId].header;
     
-    // Resolve placeholders in the recipient list (e.g., '{{driverEmail}}')
-    const recipients = (task.emailRecipients || []).map(recipient => 
-        recipient.replace('{{driverEmail}}', header.driverEmail || '')
-                 .replace('{{sellerEmail}}', header.sellerEmail || '')
-    ).filter(Boolean); // Filter out any empty recipients
+    // Resolve placeholders
+    const recipients = (task.emailRecipients || []).map(rcp =>
+        rcp.replace('{{driverEmail}}', activeHeader.driverEmail || '')
+           .replace('{{sellerEmail}}', activeHeader.sellerEmail || '')
+    ).filter(Boolean);
 
     // Use the resolved recipients, or a fallback if the list is empty.
     const to = recipients.length > 0 ? recipients : ['d.paradinejr@gmail.com'];
@@ -459,16 +493,26 @@ async function triggerEmailNotification(task) {
 }
 
 /**
- * Saves the current checklist state to a file on the server.
+ * Gets the currently active checklist object.
+ * @returns {object|null} The active checklist or null if not found.
+ */
+function getActiveChecklist() {
+    return checklists[activeChecklistId] || null;
+}
+
+
+/**
+ * Saves the active checklist to the server.
  */
 async function saveToServer() {
-    try {
-        const dataToSave = {
-            header,
-            tasks: structuredClone(tasks)
-        };
-        const filename = `FleetClean_Progress_${header.registration || 'NEW'}_${new Date().toISOString().split('T')[0]}.json`;
+    const activeChecklist = getActiveChecklist();
+    if (!activeChecklist) {
+        showStatus('❌ No active checklist to save.', 'error');
+        return;
+    }
 
+    try {
+        const filename = `FleetClean_Progress_${activeChecklist.header.registration || 'NEW'}_${new Date().toISOString().split('T')[0]}.json`;
         showStatus('☁️ Saving progress to server...', 'warning', 0);
 
         const response = await fetch(`${API_BASE_URL}/api/save-progress`, {
@@ -476,7 +520,7 @@ async function saveToServer() {
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ filename, data: dataToSave }),
+            body: JSON.stringify({ filename, data: activeChecklist }),
         });
 
         if (!response.ok) {
@@ -517,45 +561,38 @@ function loadFromFile(file) {
 }
 
 /**
- * Applies a state object (from a file, GitHub, or localStorage) to the application.
- * @param {object} data - The parsed JSON data.
- * @param {string} sourceName - The name of the file or source for status messages.
+/**
+ * Applies a loaded state to the checklists data.
+ * @param {object} data - The checklist data to apply.
+ * @param {string} sourceName - The source of the data for display messages.
  */
 function applyState(data, sourceName) {
     try {
-        if (!data || !data.header || !Array.isArray(data.tasks)) {
-            throw new Error('Invalid or corrupt data format.');
+        if (!data || !data.header || !data.header.registration || !Array.isArray(data.tasks)) {
+            throw new Error('Invalid or corrupt data format. Missing registration or tasks.');
         }
 
-        // 1. Apply Header Data (merging with defaults)
-        Object.assign(header, { location: 'Office', taxStatus: 'None Personal Use', driverStartDate: '', sellerEmail: '', ...data.header });
+        const reg = data.header.registration.toUpperCase();
 
-        // 2. Apply Task Data by matching taskId for robustness
+        // Create a new checklist object from the template tasks
+        const newChecklist = createNewChecklist(reg, false); // Create without switching
+
+        // Merge header and task data
+        Object.assign(newChecklist.header, data.header);
         const savedTasksMap = new Map(data.tasks.map(t => [t.taskId, t]));
-
-        tasks.forEach(task => {
+        newChecklist.tasks.forEach(task => {
             const savedTask = savedTasksMap.get(task.taskId);
             if (savedTask) {
-                // If a matching task is found in the loaded data, apply its state
-                task.status = savedTask.status || 'Pending';
-                task.dateActioned = savedTask.dateActioned || '';
-                task.customValue = savedTask.customValue || task.customValue;
+                Object.assign(task, savedTask);
             }
-            // If no matching task is found, it remains in its default 'Pending' state,
-            // which correctly handles newly added tasks in checklist-data.json.
         });
 
-
-        // 3. Re-render and update UI
-        groupTasksByPhase();
-        updateHeaderFields();
-        renderForm();
-        updateProgress();
+        checklists[reg] = newChecklist;
+        switchChecklist(reg);
         saveToLocalStorage();
-        // Only show status if loading from a file, not from initial local storage restore.
-        if (sourceName !== 'local') {
-            showStatus(`✅ Progress loaded from <strong>${sourceName}</strong>!`, 'success');
-        }
+        populateChecklistSelector();
+        showStatus(`✅ Progress for <strong>${reg}</strong> loaded from <strong>${sourceName}</strong>!`, 'success');
+
     } catch (error) {
         console.error('Error applying state:', error);
         showStatus(`❌ Error applying loaded data: ${error.message}`, 'error');
@@ -563,16 +600,90 @@ function applyState(data, sourceName) {
 }
 
 /**
- * Resets the entire checklist to its initial state.
+ * Creates a new, blank checklist.
+ * @param {string} registration - The registration for the new checklist.
+ * @param {boolean} [switchNow=true] - Whether to switch to the new checklist immediately.
+ * @returns {object} The newly created checklist object.
+ */
+function createNewChecklist(registration, switchNow = true) {
+    const reg = registration.toUpperCase();
+    if (checklists[reg]) {
+        alert(`A checklist for "${reg}" already exists.`);
+        return null;
+    }
+
+    // Deep clone the template tasks to create a new set for this checklist
+    const newTasks = structuredClone(tasks);
+
+    checklists[reg] = {
+        header: {
+            registration: reg,
+            makeModel: '',
+            sellerEmail: '',
+            driverName: '',
+            driverEmail: '',
+            driverStartDate: '',
+            location: 'Office',
+            taxStatus: 'None Personal Use'
+        },
+        tasks: newTasks
+    };
+
+    if (switchNow) {
+        switchChecklist(reg);
+        populateChecklistSelector();
+        showStatus(`✨ New checklist created for <strong>${reg}</strong>.`, 'success');
+    }
+    saveToLocalStorage();
+    return checklists[reg];
+}
+
+/**
+ * Switches the active checklist.
+ * @param {string} registration - The registration of the checklist to switch to.
+ */
+function switchChecklist(registration) {
+    if (checklists[registration]) {
+        activeChecklistId = registration;
+        renderActiveChecklist();
+    }
+}
+
+/**
+ * Deletes the currently active checklist.
+ */
+function deleteActiveChecklist() {
+    if (!activeChecklistId) return;
+
+    if (confirm(`Are you sure you want to delete the checklist for "${activeChecklistId}"? This cannot be undone.`)) {
+        delete checklists[activeChecklistId];
+        const remainingKeys = Object.keys(checklists);
+        activeChecklistId = remainingKeys.length > 0 ? remainingKeys[0] : null;
+
+        saveToLocalStorage();
+        populateChecklistSelector();
+
+        if (activeChecklistId) {
+            renderActiveChecklist();
+        } else {
+            // If no checklists are left, create a new default one
+            createNewChecklist('NEW_VEHICLE_1');
+        }
+        showStatus(`🗑️ Checklist for <strong>${activeChecklistId}</strong> deleted.`, 'info');
+    }
+}
+
+
+/**
+ * Resets the active checklist to its initial state.
  */
 function resetChecklist() {
-    if (confirm('Are you sure you want to reset all progress? This will clear your current session and reload the application.')) {
-        localStorage.removeItem('checklistProgress');
-        showStatus('🔄 Checklist has been reset. Reloading...', 'info', 0); // Show indefinite message
-
-        // Reload the page to get a completely fresh state from the source JSON files.
-        // This is more robust than manually resetting state.
-        window.location.reload();
+    if (confirm(`Are you sure you want to reset all progress for "${activeChecklistId}"?`)) {
+        // Re-create the checklist from the template
+        const reg = activeChecklistId;
+        delete checklists[reg];
+        createNewChecklist(reg);
+        showStatus(`🔄 Checklist for <strong>${reg}</strong> has been reset.`, 'info');
     }
 }
 
@@ -613,28 +724,61 @@ function setBusy(busy) {
 
 
 /**
- * Generates a PDF report of the current checklist state.
+ * Handles changes to the registration input field.
+ * This is complex because the registration is the key for the checklists map.
+ * @param {string} newRegistration - The new registration value.
+ */
+function handleRegistrationChange(newRegistration) {
+    const newReg = newRegistration.toUpperCase();
+    const oldReg = activeChecklistId;
+
+    if (newReg === oldReg) return; // No change
+
+    if (checklists[newReg]) {
+        alert(`Error: A checklist for "${newReg}" already exists. Cannot rename.`);
+        // Revert the input field to the old registration
+        document.getElementById('registration').value = oldReg;
+        return;
+    }
+
+    // Update the key in the checklists object
+    checklists[newReg] = checklists[oldReg];
+    delete checklists[oldReg];
+
+    // Update the header registration property
+    checklists[newReg].header.registration = newReg;
+
+    // Update the active checklist ID
+    activeChecklistId = newReg;
+
+    saveToLocalStorage();
+    populateChecklistSelector(); // Re-populate to reflect the new name
+    showStatus(`📝 Renamed checklist to <strong>${newReg}</strong>.`, 'info');
+}
+
+
+/**
+ * Generates a PDF report for the active checklist.
  */
 function generatePdf() {
     const { jsPDF } = window.jspdf;
-    if (!jsPDF) {
-        alert('Error: jsPDF library not found. Cannot generate PDF.');
+    const checklist = getActiveChecklist();
+    if (!jsPDF || !checklist) {
+        alert('Error: PDF library not found or no active checklist.');
         return;
     }
     const doc = new jsPDF();
 
-    // Find the CAZ task to get its status for the header
-    const cazTask = tasks.find(t => t.taskId === '5');
-    const cazStatus = cazTask && cazTask.customValue ? cazTask.customValue : 'N/A';
+    const cazTask = checklist.tasks.find(t => t.taskId === '5');
+    const cazStatus = cazTask?.customValue || 'N/A';
 
-    // 1. Add Title
     doc.setFontSize(18);
     doc.text('Fleet Vehicle Onboarding Report', 14, 22);
 
-    // 2. Add Header Details
     doc.setFontSize(11);
     doc.setTextColor(100);
-    let headerText = [
+    const header = checklist.header;
+    doc.text([
         `Vehicle Registration: ${header.registration || 'N/A'}`,
         `Make & Model: ${header.makeModel || 'N/A'}`,
         `Seller Email: ${header.sellerEmail || 'N/A'}`,
@@ -643,36 +787,27 @@ function generatePdf() {
         `Tax Status: ${header.taxStatus}`,
         `Clean Air Zone (CAZ) Status: ${cazStatus}`,
         `Report Generated: ${new Date().toLocaleString()}`
-    ];
-    doc.text(headerText, 14, 32);
+    ], 14, 32);
 
-    // 3. Prepare data for the table
     const tableBody = [];
-    const tableHead = [['ID', 'Task Description', 'Status', 'Date Actioned']];
-
     Object.keys(phaseGroups).forEach(phase => {
-        // Add a row for the phase title
         tableBody.push([{ content: phase, colSpan: 4, styles: { fontStyle: 'bold', fillColor: [230, 230, 230] } }]);
-        
-        phaseGroups[phase].forEach(task => {
-            // Append custom value to the task description if it exists
-            let taskDescription = task.task;
-            if (task.customInput && task.customValue) {
-                taskDescription += ` (${task.customValue})`;
+        const phaseTemplateTasks = phaseGroups[phase];
+        phaseTemplateTasks.forEach(templateTask => {
+            const task = checklist.tasks.find(t => t.taskId === templateTask.taskId);
+            if (task) {
+                let desc = task.task;
+                if (task.customValue) desc += ` (${task.customValue})`;
+                tableBody.push([task.taskId, desc, task.status, task.dateActioned || '']);
             }
-
-            tableBody.push([
-                task.taskId,
-                taskDescription,
-                task.status,
-                task.dateActioned || ''
-            ]);
         });
     });
 
-    // 4. Create the table using jspdf-autotable
-    doc.autoTable({ head: tableHead, body: tableBody, startY: 80 });
+    doc.autoTable({
+        head: [['ID', 'Task Description', 'Status', 'Date Actioned']],
+        body: tableBody,
+        startY: 80
+    });
 
-    // 5. Save the PDF
     doc.save(`FleetClean_Report_${header.registration || 'NEW'}_${new Date().toISOString().split('T')[0]}.pdf`);
 }

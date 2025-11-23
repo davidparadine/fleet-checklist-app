@@ -17,6 +17,18 @@ app.use(express.json());
 // Serve static files (index.html, app.js, etc.) from the project's root directory.
 app.use(express.static(path.join(__dirname, '/')));
 
+app.get('/api/progress-files', async (req, res) => {
+    const progressDir = path.join(__dirname, 'progress_files');
+    try {
+        await fs.mkdir(progressDir, { recursive: true });
+        const files = await fs.readdir(progressDir);
+        res.status(200).json(files.filter(file => file.endsWith('.json')));
+    } catch (error) {
+        console.error('Error listing progress files:', error);
+        res.status(500).json({ message: 'Internal Server Error while listing files.' });
+    }
+});
+
 // --- API Endpoints ---
 // A simple health check endpoint to verify the server is running
 app.get('/api/health', (req, res) => {
